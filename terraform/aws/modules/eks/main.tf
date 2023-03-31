@@ -1,3 +1,40 @@
+# IAM role the EKS cluster can assume
+resource "aws_iam_role" "eks_cluster_role" {
+  assume_role_policy = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"eks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
+  description        = "Allows access to other AWS service resources that are required to operate clusters managed by EKS."
+  inline_policy {
+  }
+
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"]
+  max_session_duration = 3600
+  name                 = "eksClusterRole"
+  path                 = "/"
+
+}
+
+
+# Extra security group to allow traffic toward ingress controller
+resource "aws_security_group" "extra_sg" {
+  description = "Extra sg rules"
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    protocol    = "-1"
+    to_port     = 0
+  }
+
+  ingress {
+    cidr_blocks = var.ingress_cidr_blocks
+    description = "ingress to k8s nodes"
+    from_port   = var.ingress_port
+    protocol    = "tcp"
+    to_port     = var.ingress_port
+  }
+
+  name   = "eks-cluster-sg-${var.cluster_name}-extra"
+  vpc_id = var.vpc_id
+}
+
 resource "aws_eks_cluster" "eks_cluster" {
   encryption_config {
     provider {
@@ -7,19 +44,54 @@ resource "aws_eks_cluster" "eks_cluster" {
     resources = ["secrets"]
   }
 
-  kubernetes_network_config {
-    ip_family         = "ipv4"
-    service_ipv4_cidr = "172.20.0.0/16"
-  }
+  #kubernetes_network_config {
+  #  ip_family         = "ipv4"
+  #  service_ipv4_cidr = "172.20.0.0/16"
+  #}
 
-  name     = "artifactdb-dev"
-  role_arn = "arn:aws:iam::197970530056:role/eksClusterRole"
-  version  = "1.25"
+  name     = var.cluster_name
+  role_arn = aws_iam_role.eks_cluster_role.arn
+  version  = var.cluster_version
   vpc_config {
     endpoint_private_access = true
-    security_group_ids      = ["sg-0f855c517effb3513"]
-    subnet_ids              = ["subnet-080ba8d0eccaef224", "subnet-0775b54dea36f3f03", "subnet-044a5b77c93e88216", "subnet-09d4362206cd23919", "subnet-0ab870a72475d5f3e", "subnet-0dbe6c58a2ec8bf15", "subnet-038742042bf0a6a62", "subnet-0a71c0939c03c641a"]
+    security_group_ids      = [aws_security_group.extra_sg.id]
+    subnet_ids              = var.deploy_subnets
   }
 
 }
+
+# Idendity provider to support IRSA auth.
+data "tls_certificate" "cert" {
+  url = aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
+}
+resource "aws_iam_openid_connect_provider" "oidc" {
+  client_id_list = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.cert.certificates.0.sha1_fingerprint]
+  url = aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
+}
+
+
+#### Enabling IAM Roles for Service Accounts  for aws-node pod
+#data "aws_iam_policy_document" "cluster_assume_role_policy" {
+#  statement {
+#    actions = ["sts:AssumeRoleWithWebIdentity"]
+#    effect  = "Allow"
+#
+#    condition {
+#      test     = "StringEquals"
+#      variable = "${replace(aws_iam_openid_connect_provider.oidc.url, "https://", "")}:sub"
+#      values   = ["system:serviceaccount:kube-system:aws-node"]
+#    }
+#
+#    principals {
+#      identifiers = [aws_iam_openid_connect_provider.oidc.arn]
+#      type        = "Federated"
+#    }
+#  }
+#}
+#
+#resource "aws_iam_role" "cluster" {
+#  assume_role_policy = data.aws_iam_policy_document.cluster_assume_role_policy.json
+#  name               = format("irsa-%s-aws-node", aws_eks_cluster.cluster.name)
+#}
 
