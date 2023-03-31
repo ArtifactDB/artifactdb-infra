@@ -19,12 +19,3 @@ variable "deploy_subnets" {
   type = list
 }
 
-variable "ingress_port" {
-  type = number
-  default = 30080
-}
-
-variable "ingress_cidr_blocks" {
-  description = "List CIDR blocks from which traffic can flow within the ingres controller. Usually matching what the ALB is targetting"
-  type = list
-}

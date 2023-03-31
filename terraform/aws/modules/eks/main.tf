@@ -13,7 +13,7 @@ resource "aws_iam_role" "eks_cluster_role" {
 }
 
 
-# Extra security group to allow traffic toward ingress controller
+# Extra security group (placeholder for now)
 resource "aws_security_group" "extra_sg" {
   description = "Extra sg rules"
   egress {
@@ -21,14 +21,6 @@ resource "aws_security_group" "extra_sg" {
     from_port   = 0
     protocol    = "-1"
     to_port     = 0
-  }
-
-  ingress {
-    cidr_blocks = var.ingress_cidr_blocks
-    description = "ingress to k8s nodes"
-    from_port   = var.ingress_port
-    protocol    = "tcp"
-    to_port     = var.ingress_port
   }
 
   name   = "eks-cluster-sg-${var.cluster_name}-extra"
@@ -94,4 +86,5 @@ resource "aws_iam_openid_connect_provider" "oidc" {
 #  assume_role_policy = data.aws_iam_policy_document.cluster_assume_role_policy.json
 #  name               = format("irsa-%s-aws-node", aws_eks_cluster.cluster.name)
 #}
+
 
