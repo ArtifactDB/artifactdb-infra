@@ -45,7 +45,8 @@ resource "aws_eks_cluster" "eks_cluster" {
   role_arn = aws_iam_role.eks_cluster_role.arn
   version  = var.cluster_version
   vpc_config {
-    endpoint_private_access = true
+    endpoint_private_access = "true"
+    endpoint_public_access  = "false"
     security_group_ids      = [aws_security_group.extra_sg.id]
     subnet_ids              = var.deploy_subnets
   }
@@ -62,6 +63,26 @@ resource "aws_iam_openid_connect_provider" "oidc" {
   url = aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
 }
 
+# Addons
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name = aws_eks_cluster.eks_cluster.name
+  addon_name   = "vpc-cni"
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name = aws_eks_cluster.eks_cluster.name
+  addon_name   = "kube-proxy"
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.eks_cluster.name
+  addon_name   = "aws-ebs-csi-driver"
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name = aws_eks_cluster.eks_cluster.name
+  addon_name   = "coredns"
+}
 
 #### Enabling IAM Roles for Service Accounts  for aws-node pod
 #data "aws_iam_policy_document" "cluster_assume_role_policy" {

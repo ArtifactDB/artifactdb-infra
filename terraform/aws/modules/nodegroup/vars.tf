@@ -2,6 +2,11 @@ variable "node_group_name" {
   type = string
 }
 
+variable "ssh_key_name" {
+  description = "SSH key to log into EKS nodes (if needed)"
+  type = string
+}
+
 variable "ingress_cidr_blocks" {
   description = "List CIDR blocks from which traffic can flow within the ingres controller. Usually matching what the ALB is targetting"
   type = list

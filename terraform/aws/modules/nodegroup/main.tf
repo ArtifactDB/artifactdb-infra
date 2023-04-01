@@ -50,10 +50,10 @@ resource "aws_eks_node_group" "nodegroup" {
   disk_size       = var.disk_size
   subnet_ids      = var.subnet_ids
 
-  #remote_access {
-  #      ec2_ssh_key               = var.ssh_key_name
-  #      source_security_group_ids = []
-  #  }
+  remote_access {
+        ec2_ssh_key               = var.ssh_key_name
+        source_security_group_ids = []
+    }
 
   scaling_config {
         desired_size = var.desired_size
