@@ -84,6 +84,22 @@ resource "aws_eks_addon" "coredns" {
   addon_name   = "coredns"
 }
 
+data "aws_subnet" "deploy_subnets" {
+  for_each = "${toset(var.deploy_subnets)}"
+  id       = "${each.value}"
+}
+
+# Allow k8s access from same subnets
+resource "aws_security_group_rule" "k8s_access" {
+    description = "k8s access"
+    type        = "ingress"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = values(data.aws_subnet.deploy_subnets).*.cidr_block
+    security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+}
+
 #### Enabling IAM Roles for Service Accounts  for aws-node pod
 #data "aws_iam_policy_document" "cluster_assume_role_policy" {
 #  statement {
