@@ -17,3 +17,4 @@ output "cluster_name" {
 output "cluster_version" {
   value     = aws_eks_cluster.eks_cluster.version
 }
+

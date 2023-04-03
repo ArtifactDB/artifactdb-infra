@@ -19,3 +19,8 @@ variable "deploy_subnets" {
   type = list
 }
 
+variable "non_routable_subnets" {
+  description = "List of subnets IDs the EKS cluster is using to deploy pods. Usually within 100.64.0.0/16"
+  type = list
+}
+
