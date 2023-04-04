@@ -40,20 +40,68 @@ resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
 }
 
 
+
+# Self-annotation with correct ENIConfig to enable pod assignment
+data "template_file" "eks_user_data" {
+    template = "${file("bootstrap_user_data.sh.tpl")}"
+    vars = {
+        cluster_endpoint = "${var.cluster_endpoint}"
+        cluster_name = "${var.cluster_name}"
+        cluster_ca = "${var.cluster_ca}"
+        eks_ami = "${var.eks_ami}"
+        node_group_name = "${var.node_group_name}"
+    }
+}
+
+resource "aws_launch_template" "launch_template" {
+    name                    = "lt-${var.cluster_name}-${var.node_group_name}-eks"
+    image_id                = var.eks_ami
+    key_name                = var.ssh_key_name
+    user_data               = base64encode(data.template_file.eks_user_data.rendered)
+    update_default_version  = true
+    # TODO: specify custom KMS key (but then the instance doesn't start)
+    block_device_mappings {
+        device_name = "/dev/xvda"
+        ebs {
+            delete_on_termination = "true"
+            #encrypted             = "true"
+            #kms_key_id            = var.kms_arn
+            volume_size           = var.volume_size
+            volume_type           = var.volume_type
+        }
+    }
+
+    # TODO:
+    # sg eks remote access ?
+    vpc_security_group_ids = [var.cluster_security_group_id]
+
+#    network_interfaces {
+#        device_index       = 0
+#        security_groups    = [
+#            "sg-066ef4b2098c3ffde",
+#            "sg-0e938d5a5d08167e4",
+#        ]
+#    }
+
+}
+
+
 resource "aws_eks_node_group" "nodegroup" {
   cluster_name    = var.cluster_name
-  version         = var.cluster_version
+  # version and LT image_id are exclusive: if we select the AMI we're using to
+  # corresponding EKS AMI version matching the cluster.  if not, we let EKS
+  # selecting the one it wants. Same of AMI type.
+  version         = var.eks_ami == null ? var.cluster_version : null
+  ami_type        = var.eks_ami == null ? var.ami_type : null
   node_group_name = var.node_group_name
   node_role_arn   = aws_iam_role.node_role.arn
-  ami_type        = var.ami_type
   instance_types  = var.instance_types
-  disk_size       = var.disk_size
   subnet_ids      = var.subnet_ids
 
-  remote_access {
-        ec2_ssh_key               = var.ssh_key_name
-        source_security_group_ids = []
-    }
+  launch_template {
+    id = aws_launch_template.launch_template.id
+    version = "$Latest"
+  }
 
   scaling_config {
         desired_size = var.desired_size
@@ -89,5 +137,4 @@ resource "aws_security_group_rule" "ingress" {
     cidr_blocks = var.ingress_cidr_blocks
     security_group_id = aws_eks_node_group.nodegroup.resources[0].remote_access_security_group_id
 }
-
 

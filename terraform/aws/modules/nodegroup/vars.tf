@@ -2,6 +2,7 @@ variable "node_group_name" {
   type = string
 }
 
+
 variable "ssh_key_name" {
   description = "SSH key to log into EKS nodes (if needed)"
   type = string
@@ -57,9 +58,20 @@ variable "instance_types" {
   type = list
 }
 
-variable "disk_size" {
+variable "volume_size" {
   description = "Disk size per node in GiB"
   type = number
+}
+
+variable "volume_type" {
+  description = "Volume type, eg. gp2, gp3, etc..."
+  type = string
+  default = "gp2"
+}
+
+variable "kms_arn" {
+  description = "KMS key to encrypt nodes EBS volumes"
+  type = string
 }
 
 variable "cluster_name" {
@@ -70,3 +82,21 @@ variable "cluster_version" {
   type = string
 }
 
+variable "eks_ami" {
+  description = "EKS AMI identifier"
+  type = string
+  default = null  # Let it select the one it wants
+}
+
+variable "cluster_ca" {
+  type = string
+}
+
+variable "cluster_endpoint" {
+  type = string
+}
+
+variable "cluster_security_group_id" {
+  description = "EKS cluster security group ID allowing the node to join the cluster"
+  type = string
+}
