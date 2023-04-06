@@ -13,7 +13,7 @@ variable "ssh_key_name" {
 }
 
 variable "ingress_cidr_blocks" {
-  description = "List CIDR blocks from which traffic can flow within the ingres controller. Usually matching what the ALB is targetting"
+  description = "List CIDR blocks from which traffic can flow within the ingress controller. Usually matching what the ALB is targetting"
   type = list
 }
 
