@@ -40,6 +40,26 @@ resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
 }
 
 
+resource "aws_security_group" "ingress" {
+  description = "ingress to k8s nodes"
+  vpc_id = var.vpc_id
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    protocol    = "-1"
+    to_port     = 0
+  }
+
+  ingress {
+    cidr_blocks = var.ingress_cidr_blocks
+    from_port = var.ingress_port
+    to_port = var.ingress_port
+    protocol = "tcp"
+  }
+
+  name   = "eks-ingress-sg-${var.cluster_name}"
+}
+
 
 # Self-annotation with correct ENIConfig to enable pod assignment
 data "template_file" "eks_user_data" {
@@ -71,20 +91,38 @@ resource "aws_launch_template" "launch_template" {
         }
     }
 
-    # TODO:
-    # sg eks remote access ?
-    vpc_security_group_ids = [var.cluster_security_group_id]
-
-#    network_interfaces {
-#        device_index       = 0
-#        security_groups    = [
-#            "sg-066ef4b2098c3ffde",
-#            "sg-0e938d5a5d08167e4",
-#        ]
-#    }
+    vpc_security_group_ids = flatten([
+      var.cluster_security_group_id,                        # joins control plane
+      aws_security_group.remote_ssh.id,                     # SSH to nodes for debug
+      var.ingressed ? [aws_security_group.ingress.id] : [], # allows traffic to ingressable node
+    ])
 
 }
 
+data "aws_subnet" "ssh_target" {
+  for_each = "${toset(var.ssh_access_subnet_ids)}"
+  id       = "${each.value}"
+}
+
+resource "aws_security_group" "remote_ssh" {
+  description = "Defines SG from which SSH to nodes is allowed"
+  vpc_id = var.vpc_id
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    protocol    = "-1"
+    to_port     = 0
+  }
+
+  ingress {
+    cidr_blocks = values(data.aws_subnet.ssh_target).*.cidr_block
+    from_port = 22
+    to_port = 22
+    protocol = "TCP"
+  }
+
+  name   = "eks-remote-ssh-sg-${var.cluster_name}"
+}
 
 resource "aws_eks_node_group" "nodegroup" {
   cluster_name    = var.cluster_name
@@ -112,8 +150,8 @@ resource "aws_eks_node_group" "nodegroup" {
   timeouts {}
 
   update_config {
-        max_unavailable            = var.max_unavailable
-    }
+    max_unavailable            = var.max_unavailable
+  }
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
   # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
@@ -127,14 +165,14 @@ resource "aws_eks_node_group" "nodegroup" {
 }
 
 
-# Allow traffic toward ingress controller
-resource "aws_security_group_rule" "ingress" {
-    description = "ingress to k8s nodes"
-    type        = "ingress"
-    from_port   = var.ingress_port
-    to_port     = var.ingress_port
-    protocol    = "tcp"
-    cidr_blocks = var.ingress_cidr_blocks
-    security_group_id = aws_eks_node_group.nodegroup.resources[0].remote_access_security_group_id
-}
+## Allow traffic toward ingress controller
+#resource "aws_security_group_rule" "ingress" {
+#  description = "ingress to k8s nodes"
+#  type        = "ingress"
+#  from_port   = var.ingress_port
+#  to_port     = var.ingress_port
+#  protocol    = "tcp"
+#  cidr_blocks = var.ingress_cidr_blocks
+#  security_group_id = aws_eks_node_group.nodegroup.resources[0].remote_access_security_group_id
+#}
 

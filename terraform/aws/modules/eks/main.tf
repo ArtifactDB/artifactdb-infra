@@ -7,7 +7,7 @@ resource "aws_iam_role" "eks_cluster_role" {
 
   managed_policy_arns  = ["arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"]
   max_session_duration = 3600
-  name                 = "eksClusterRole"
+  name                 = "eks-cluster-role-${var.cluster_name}"
   path                 = "/"
 
 }

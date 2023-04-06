@@ -1,7 +1,11 @@
-variable "node_group_name" {
+variable "vpc_id" {
+  description = "VPC ID for some resources like SG"
   type = string
 }
 
+variable "node_group_name" {
+  type = string
+}
 
 variable "ssh_key_name" {
   description = "SSH key to log into EKS nodes (if needed)"
@@ -99,4 +103,9 @@ variable "cluster_endpoint" {
 variable "cluster_security_group_id" {
   description = "EKS cluster security group ID allowing the node to join the cluster"
   type = string
+}
+
+variable "ssh_access_subnet_ids" {
+  description = "Subnet IDs from wich SSH access to k8s nodes are allowed"
+  type = list
 }

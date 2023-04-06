@@ -5,8 +5,6 @@ Content-Type: multipart/mixed; boundary="//"
 Content-Type: text/x-shellscript; charset="us-ascii"
 #!/bin/bash
 set -ex
-echo whoami
-whoami
 # proceed to bootstrap
 B64_CLUSTER_CA=${cluster_ca}
 API_SERVER_URL=${cluster_endpoint}
@@ -28,9 +26,6 @@ kubectl --kubeconfig=/root/.kube/config config get-contexts
 EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
 NODE_NAME=`curl http://169.254.169.254/latest/meta-data/hostname`
 echo "Switch to k8s context"
-cat /root/.kube/config
-echo whoami
-whoami
 kubectl --kubeconfig=/root/.kube/config config get-contexts
 kubectl --kubeconfig=/root/.kube/config config use-context ${cluster_name}
 kubectl --kubeconfig=/root/.kube/config config current-context
