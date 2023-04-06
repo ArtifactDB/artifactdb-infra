@@ -3,8 +3,23 @@ variable "vpc_id" {
   type = string
 }
 
+variable "cluster_name" {
+  type = string
+}
+
 variable "lb_name" {
   type = string
+}
+
+variable "internal" {
+  description = "Defines whether the ALB is privately (true) or publicly (false) accessible"
+  type = bool
+  default = true
+}
+
+variable "ingress_cidr_blocks" {
+  description = "List CIDR blocks from which traffic to ALB is allowed"
+  type = list
 }
 
 variable "subnet_ids" {

@@ -30,12 +30,45 @@ resource "aws_s3_bucket_policy" "lb_logs_policy" {
   policy = data.aws_iam_policy_document.s3_lb_write.json
 }
 
+resource "aws_security_group" "ingress" {
+  description = "Allows access to the load balancer"
+  name   = "eks-alb-sg-${var.cluster_name}"
+  vpc_id = var.vpc_id
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    protocol    = "-1"
+    to_port     = 0
+  }
+}
+
+resource "aws_security_group_rule" "https" {
+  count = var.ssl_cert_arn != null ? 1 : 0
+  security_group_id = aws_security_group.ingress.id
+  type = "ingress"
+  cidr_blocks = var.ingress_cidr_blocks
+  from_port = 443
+  to_port = 443
+  protocol = "TCP"
+}
+
+resource "aws_security_group_rule" "http" {
+  count = var.ssl_cert_arn == null ? 1 : 0
+  security_group_id = aws_security_group.ingress.id
+  type = "ingress"
+  cidr_blocks = var.ingress_cidr_blocks
+  from_port = 80
+  to_port = 80
+  protocol = "TCP"
+}
+
 resource "aws_lb" "lb" {
   name               = var.lb_name
-  internal           = true
+  internal           = var.internal
   load_balancer_type = "application"
   subnets            = var.subnet_ids
 
+  security_groups    = [aws_security_group.ingress.id]
   enable_deletion_protection = true
 
   access_logs {
