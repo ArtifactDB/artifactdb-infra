@@ -39,6 +39,25 @@ resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
   role       = aws_iam_role.node_role.name
 }
 
+# Allow ingressable node to self-register to ALB when booting
+data "aws_iam_policy_document" "alb_register" {
+  statement {
+    effect = "Allow"
+    actions = ["elasticloadbalancing:RegisterTargets"]
+    resources = ["${var.ingress_target_group_arn}"]
+  }
+}
+
+resource "aws_iam_policy" "alb_register" {
+  name   = "policy-alb-register-${var.cluster_name}"
+  path   = "/"
+  policy = data.aws_iam_policy_document.alb_register.json
+}
+
+resource "aws_iam_role_policy_attachment" "alb_register" {
+  policy_arn = aws_iam_policy.alb_register.arn
+  role       = aws_iam_role.node_role.name
+}
 
 resource "aws_security_group" "ingress" {
   description = "ingress to k8s nodes"
@@ -70,6 +89,8 @@ data "template_file" "eks_user_data" {
         cluster_ca = "${var.cluster_ca}"
         eks_ami = "${var.eks_ami}"
         node_group_name = "${var.node_group_name}"
+        ingressed = "${var.ingressed}"
+        ingress_target_group_arn = "${var.ingress_target_group_arn}"
     }
 }
 

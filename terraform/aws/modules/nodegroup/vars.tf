@@ -27,6 +27,12 @@ variable "ingressed" {
   type = bool
 }
 
+variable "ingress_target_group_arn" {
+  description = "Specificy ALB target group ARN taking care of ingress traffic"
+  type = string
+  default = null
+}
+
 variable "subnet_ids" {
   description = "Subnet IDs where the nodes are deployed"
   type = list

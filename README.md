@@ -15,3 +15,16 @@ This infrastructure is a foundation to then deploy ArtifactDB instances and othe
 
 Deployment is based on Terragrunt, a Terraform wrapper used to make Terraform a little bit less painful to play with.
 See install instruction here: https://terragrunt.gruntwork.io/docs/getting-started/quick-start/
+
+It also requires
+- jq: `apt install jq`
+
+
+TODO:
+- use custom KMS key in launch template for nodegroup
+- fix the (probable) mess with Terraform/Terragrunt variables
+- how to deal with VPC (multiple, default) in general?
+- use a eksautomation as a second process to secure tagging and ALB registration?
+
+
+

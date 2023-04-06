@@ -48,10 +48,14 @@ resource "aws_lb" "lb" {
 }
 
 resource "aws_lb_target_group" "ingress" {
-  name     = var.lb_name
+  name     = "tg-${var.lb_name}"
   port     = 30080
   protocol = "HTTP"
   vpc_id   = var.vpc_id
+  health_check {
+    enabled = true
+    matcher = "404"  # by default we reach Traefik without ingress rules, so 404
+  }
 }
 
 # Listeners: if SSL cert, we redirect from HTTP to HTTPS
