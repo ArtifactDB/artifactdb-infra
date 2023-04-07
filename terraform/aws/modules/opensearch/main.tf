@@ -15,6 +15,23 @@ data "aws_iam_policy_document" "es_policy" {
   }
 }
 
+data "aws_subnet" "es_target" {
+  for_each = "${toset(var.access_subnet_ids)}"
+  id       = "${each.value}"
+}
+
+
+resource "aws_security_group" "es_sg" {
+  name        = "es-sg-${var.domain_name}"
+  vpc_id      = [for s in data.aws_subnet.es_target : s.vpc_id][0]
+  ingress {
+    from_port = 443
+    to_port   = 443
+    protocol  = "tcp"
+
+    cidr_blocks = values(data.aws_subnet.es_target).*.cidr_block
+  }
+}
 
 resource "aws_opensearch_domain" "opensearch" {
   domain_name    = var.domain_name
@@ -31,13 +48,14 @@ resource "aws_opensearch_domain" "opensearch" {
 
   vpc_options {
     subnet_ids = var.subnet_ids
+    security_group_ids = [aws_security_group.es_sg.id]
   }
 
   ebs_options {
     # TODO: maybe not required/allowed for all instance type?
     ebs_enabled = true
     volume_size = var.volume_size
-    #volume_type = var.volume_type
+    volume_type = var.volume_type
     #iops = var.volume_iops
     #throughput = var.volume_throughput
   }
