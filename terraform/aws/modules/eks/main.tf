@@ -67,6 +67,7 @@ resource "aws_iam_openid_connect_provider" "oidc" {
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name = aws_eks_cluster.eks_cluster.name
   addon_name   = "vpc-cni"
+  resolve_conflicts = "OVERWRITE"
 }
 
 resource "aws_eks_addon" "kube_proxy" {
@@ -74,14 +75,79 @@ resource "aws_eks_addon" "kube_proxy" {
   addon_name   = "kube-proxy"
 }
 
-resource "aws_eks_addon" "ebs_csi" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "aws-ebs-csi-driver"
+#resource "aws_eks_addon" "ebs_csi" {
+#  cluster_name = aws_eks_cluster.eks_cluster.name
+#  addon_name   = "aws-ebs-csi-driver"
+#  timeouts {
+#    create = "5m"
+#  }
+#}
+
+#resource "aws_eks_addon" "coredns" {
+#  cluster_name = aws_eks_cluster.eks_cluster.name
+#  addon_name   = "coredns"
+#  timeouts {
+#    create = "5m"
+#  }
+#}
+
+
+# Custom EKS addon install, for these (deployment based) we don't have nodes
+# yet so they stay in DEGRADED state, which is fine, but aws_eks_addon module wants ACTIVE only...
+resource "null_resource" "addon_ebs_csi" {
+    triggers = {
+        id = aws_eks_cluster.eks_cluster.arn
+    }
+    depends_on = [aws_eks_cluster.eks_cluster]
+    provisioner "local-exec" {
+        on_failure  = fail
+        when = create
+        interpreter = ["/bin/bash", "-c"]
+        command     = <<EOT
+            aws eks describe-addon --cluster-name artifactdb-dev --addon-name aws-ebs-csi-driver && exit 0
+            aws eks create-addon --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver
+            out=`aws eks wait addon-active --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver 2>&1`
+            if [ "$?" != "0" ]
+            then
+                echo "Addon not ACTIVE, check DEGRADED"
+                echo $out | grep DEGRADED
+                if [ "$?" != "0" ]
+                then
+                    echo "Addon in expected state: $out"
+                    exit 255
+                fi
+            fi
+            echo "************************************************************************************"
+EOT
+    }
 }
 
-resource "aws_eks_addon" "coredns" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "coredns"
+resource "null_resource" "addon_coredns" {
+    triggers = {
+        id = aws_eks_cluster.eks_cluster.arn
+    }
+    depends_on = [aws_eks_cluster.eks_cluster]
+    provisioner "local-exec" {
+        on_failure  = fail
+        when = create
+        interpreter = ["/bin/bash", "-c"]
+        command     = <<EOT
+            aws eks describe-addon --cluster-name artifactdb-dev --addon-name coredns && exit 0
+            aws eks create-addon --cluster-name ${var.cluster_name} --addon-name coredns
+            out=`aws eks wait addon-active --cluster-name ${var.cluster_name} --addon-name coredns 2>&1`
+            if [ "$?" != "0" ]
+            then
+                echo "Addon not ACTIVE, check DEGRADED"
+                echo $out | grep DEGRADED
+                if [ "$?" != "0" ]
+                then
+                    echo "Addon in expected state: $out"
+                    exit 255
+                fi
+            fi
+            echo "************************************************************************************"
+EOT
+    }
 }
 
 data "aws_subnet" "deploy_subnets" {

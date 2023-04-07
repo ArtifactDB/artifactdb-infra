@@ -63,6 +63,7 @@ apt install jq
 - version infra, eg. `infra.v3`, from git branch?
 - support for ingress controller NGINX?
 - auto-install local dependencies? like kubectl must match k8s version, but that info in from a variable
+- custom eks addon install as a module (refactor)
 
 
 
