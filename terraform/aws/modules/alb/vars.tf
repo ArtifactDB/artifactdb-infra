@@ -33,7 +33,7 @@ variable "lb_logs_bucket" {
 }
 
 variable "ssl_cert_arn" {
-  description = "SSL certificate, optional"
+  description = "SSL certificate, optional. If present, an HTTPS listener is added."
   type = string
   default = null
 }
