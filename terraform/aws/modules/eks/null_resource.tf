@@ -1,6 +1,6 @@
 resource "null_resource" "enable_custom_cni" {
     triggers = {
-        always_run = timestamp()
+        id = aws_eks_cluster.eks_cluster.arn
     }
     depends_on = [aws_eks_cluster.eks_cluster]
     provisioner "local-exec" {
@@ -26,7 +26,7 @@ EOT
 # generate ENIConfig per AZ
 resource "null_resource" "eniconfig" {
     triggers = {
-        always_run = timestamp()
+        id = aws_eks_cluster.eks_cluster.arn
     }
     for_each = "${toset(var.non_routable_subnets)}"
     depends_on = [aws_eks_cluster.eks_cluster]
