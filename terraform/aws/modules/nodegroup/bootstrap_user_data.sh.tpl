@@ -36,8 +36,12 @@ $cmd
 if [ "X${ingressed}" != "X" ]
 then
     instance_id=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
-    echo "Self-registering instance $instance_id to ALB target group ${ingress_target_group_arn}"
-    aws elbv2 register-targets --target-group-arn ${ingress_target_group_arn} --targets Id=$instance_id
+    # there can be multiple Target Groups, find them using custom ta
+    for tg_arn in `aws resourcegroupstaggingapi get-resources --resource-type-filters elasticloadbalancing:targetgroup --tag-filters Key=OwnedBy,Values=${cluster_name} --tag-filters Key=ArtifactDBIngress,Values=true --query ResourceTagMappingList[].ResourceARN --output text`
+    do
+        echo "Self-registering instance $instance_id to ALB target group $tg_arn"
+        aws elbv2 register-targets --target-group-arn $tg_arn --targets Id=$instance_id
+    done
 else
     echo "Node not ingressable, no self-registration to ALB"
 fi
