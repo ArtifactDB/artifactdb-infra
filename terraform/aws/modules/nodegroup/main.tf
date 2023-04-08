@@ -44,7 +44,19 @@ data "aws_iam_policy_document" "alb_register" {
   statement {
     effect = "Allow"
     actions = ["elasticloadbalancing:RegisterTargets"]
-    resources = ["${var.ingress_target_group_arn}"]
+    resources = ["*"]
+    # allows to register into any TG owned by the platform deployment
+    condition {
+      test = "StringEquals"
+      variable = "aws:ResourceTag/OwnedBy"
+      values = ["${var.cluster_name}"]
+    }
+  }
+
+  statement {
+    effect = "Allow"
+    actions = ["tag:GetResources", "tag:GetTagValues", "tag:GetTagKeys"]
+    resources = ["*"]  # TODO: any way to restrict which tags we can read?
   }
 }
 
@@ -90,7 +102,6 @@ data "template_file" "eks_user_data" {
         eks_ami = "${var.eks_ami}"
         node_group_name = "${var.node_group_name}"
         ingressed = "${var.ingressed}"
-        ingress_target_group_arn = "${var.ingress_target_group_arn}"
     }
 }
 

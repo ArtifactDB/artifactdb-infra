@@ -56,6 +56,10 @@ resource "aws_lb_target_group" "ingress" {
     enabled = true
     matcher = "404"  # by default we reach Traefik without ingress rules, so 404
   }
+  tags = {
+    ArtifactDBIngress = "true"
+    OwnedBy = "${var.cluster_name}"
+  }
 }
 
 # Listeners: if SSL cert, we redirect from HTTP to HTTPS

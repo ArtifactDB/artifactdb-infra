@@ -7,6 +7,10 @@ variable "lb_name" {
   type = string
 }
 
+variable "cluster_name" {
+  type = string
+}
+
 variable "logs_bucket" {
   description = "Bucket name where ALB access logs can be stored"
   type = string
