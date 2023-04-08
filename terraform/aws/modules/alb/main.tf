@@ -1,38 +1,6 @@
-data "aws_elb_service_account" "main" {}
-
-data "aws_iam_policy_document" "s3_lb_write" {
-  statement {
-    principals {
-      identifiers = ["${data.aws_elb_service_account.main.arn}"]
-      type = "AWS"
-    }
-
-    actions = ["s3:PutObject"]
-
-    resources = [
-      "${aws_s3_bucket.lb_logs.arn}/*"
-    ]
-  }
-}
-
-
-resource aws_s3_bucket "lb_logs" {
-  bucket = var.lb_logs_bucket
-}
-
-resource "aws_s3_bucket_acl" "acl" {
-  bucket = aws_s3_bucket.lb_logs.id
-  acl    = "private"
-}
-
-resource "aws_s3_bucket_policy" "lb_logs_policy" {
-  bucket = aws_s3_bucket.lb_logs.id
-  policy = data.aws_iam_policy_document.s3_lb_write.json
-}
-
 resource "aws_security_group" "ingress" {
   description = "Allows access to the load balancer"
-  name   = "eks-alb-sg-${var.cluster_name}"
+  name   = "eks-alb-sg-${var.lb_name}"
   vpc_id = var.vpc_id
   egress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -72,12 +40,11 @@ resource "aws_lb" "lb" {
   enable_deletion_protection = true
 
   access_logs {
-    bucket  = aws_s3_bucket.lb_logs.id
+    bucket  = var.logs_bucket
     prefix  = var.lb_name
     enabled = true
   }
 
-  depends_on = [aws_s3_bucket.lb_logs]
 }
 
 resource "aws_lb_target_group" "ingress" {

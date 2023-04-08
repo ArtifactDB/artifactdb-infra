@@ -3,11 +3,12 @@ variable "vpc_id" {
   type = string
 }
 
-variable "cluster_name" {
+variable "lb_name" {
   type = string
 }
 
-variable "lb_name" {
+variable "logs_bucket" {
+  description = "Bucket name where ALB access logs can be stored"
   type = string
 }
 
@@ -25,11 +26,6 @@ variable "ingress_cidr_blocks" {
 variable "subnet_ids" {
   description = "Subnet IDs where the ingressable nodes are deployed"
   type = list
-}
-
-variable "lb_logs_bucket" {
-  description = "Bucket name to store ALB logs"
-  type = string
 }
 
 variable "ssl_cert_arn" {
