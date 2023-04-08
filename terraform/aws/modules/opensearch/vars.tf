@@ -15,6 +15,11 @@ variable "subnet_ids" {
   type = list
 }
 
+variable "access_subnet_ids" {
+  description = "List of subnet IDs allowed to access Opensearch endpoint."
+  type = list
+}
+
 variable "dedicated_master_enabled" {
   description = "Dedicated masters improved stability. Recommeneded for production."
   type = bool
