@@ -72,6 +72,7 @@ resource "aws_iam_role_policy_attachment" "alb_register" {
 }
 
 resource "aws_security_group" "ingress" {
+  count = var.ingressed ? 1 : 0
   description = "ingress to k8s nodes"
   vpc_id = var.vpc_id
   egress {
@@ -90,6 +91,18 @@ resource "aws_security_group" "ingress" {
 
   name   = "eks-ingress-sg-${var.cluster_name}"
 }
+
+# Adding ALB SG in nodegroup ingress SG to allow the ALB to forward traffic to ingressable node
+resource "aws_security_group_rule" "forward" {
+  for_each = "${toset(var.lb_security_groups)}"
+  security_group_id = aws_security_group.ingress[0].id
+  source_security_group_id = each.value
+  type = "ingress"
+  from_port = var.ingress_port
+  to_port = var.ingress_port
+  protocol = "TCP"
+}
+
 
 
 # Self-annotation with correct ENIConfig to enable pod assignment
@@ -126,7 +139,7 @@ resource "aws_launch_template" "launch_template" {
     vpc_security_group_ids = flatten([
       var.cluster_security_group_id,                        # joins control plane
       aws_security_group.remote_ssh.id,                     # SSH to nodes for debug
-      var.ingressed ? [aws_security_group.ingress.id] : [], # allows traffic to ingressable node
+      var.ingressed ? [aws_security_group.ingress[0].id] : [], # allows traffic to ingressable node
     ])
 
 }

@@ -10,6 +10,7 @@ resource "aws_security_group" "ingress" {
   }
 }
 
+# Setting rule to allow ALB access
 resource "aws_security_group_rule" "https" {
   count = var.ssl_cert_arn != null ? 1 : 0
   security_group_id = aws_security_group.ingress.id
@@ -49,7 +50,7 @@ resource "aws_lb" "lb" {
 
 resource "aws_lb_target_group" "ingress" {
   name     = "tg-${var.lb_name}"
-  port     = 30080
+  port     = var.ingress_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   health_check {

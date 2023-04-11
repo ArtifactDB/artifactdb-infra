@@ -28,7 +28,6 @@ resource "aws_security_group" "es_sg" {
     from_port = 443
     to_port   = 443
     protocol  = "tcp"
-
     cidr_blocks = values(data.aws_subnet.es_target).*.cidr_block
   }
 }

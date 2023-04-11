@@ -25,6 +25,13 @@ variable "internal" {
 variable "ingress_cidr_blocks" {
   description = "List CIDR blocks from which traffic to ALB is allowed"
   type = list
+  default = null
+}
+
+variable "ingress_port" {
+  description = "Ingress port to forward traffic to"
+  type = number
+  default = 30080
 }
 
 variable "subnet_ids" {

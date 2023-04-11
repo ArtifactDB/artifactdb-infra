@@ -27,12 +27,6 @@ variable "ingressed" {
   type = bool
 }
 
-variable "ingress_target_group_arn" {
-  description = "Specificy ALB target group ARN taking care of ingress traffic"
-  type = string
-  default = null
-}
-
 variable "subnet_ids" {
   description = "Subnet IDs where the nodes are deployed"
   type = list
@@ -114,4 +108,10 @@ variable "cluster_security_group_id" {
 variable "ssh_access_subnet_ids" {
   description = "Subnet IDs from wich SSH access to k8s nodes are allowed"
   type = list
+}
+
+variable "lb_security_groups" {
+  description = "List of ALB security group IDS allowed to forward traffic to node (for ingressed only)"
+  type = list
+  default = []
 }
