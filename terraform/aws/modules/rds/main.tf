@@ -38,7 +38,7 @@ resource "random_password" "master"{
   override_special = "_!%"
 }
 
-# TODO: use secret manager more globally?
+# TODO: use secret manager more globally? See "post" module
 resource "aws_secretsmanager_secret" "password" {
   # can't use GPRN notation with colon, not allowedim ASM
   name = "gprn-${var.env}-artifactdb--secret-psql"

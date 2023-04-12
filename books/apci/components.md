@@ -51,6 +51,12 @@ IRSA is enabled on the cluster, to allow Kubernetes Service Account to map and a
 convenient when it comes to allow/restrict which cloud resources an ArtifactDB instance can access and modify (eg. full
 access to its dedicated S3 buckets), without having to use IAM users (and rotate access/secret keys frequently).
 
+## KMS: encryption at rest
+
+A custom KMS key is created when deploying the platform. It is used for encryption-at-rest in several shared resources,
+such as EBS volumes attached to worker nodes, S3 buckets collecting ALB traffic logs, etc... Note this KMS key is unique
+per platform deployment, and is not reused for each ArtifactDB instance deployment, which has its own dedicated KMS key.
+
 ### Cluster-wide controllers
 
 #### Ingress controller
@@ -93,11 +99,18 @@ of AWS and a shared indexing engine, Opensearch provides per-index permissions, 
 instance to a set of specific indices assigned during its deployement, while restricting it from accessing other
 instances' indices.
 
-## KMS: encryption at rest
+Following one important principle in ArtifactDB, the whole content of an index (or more) in Opensearch can be fully
+restored from the metadata files found on S3. It is strictly a secondary storage.
 
-A custom KMS key is created when deploying the platform. It is used for encryption-at-rest in several shared resources,
-such as EBS volumes attached to worker nodes, S3 buckets collecting ALB traffic logs, etc... Note this KMS key is unique
-per platform deployment, and is not reused for each ArtifactDB instance deployment, which has its own dedicated KMS key.
+## RDS: PostgreSQL
+
+ArtifactDB instances use PostgreSQL to provision project ID and versions in a transactional way. There's no actual data,
+or metadata stored in the database, only identifiers. The requirements fare pretty low, a small instance is enough,
+deployed in multiple AZ for production to improve uptime and reliability.
+
+Following the same principle explained above, the whole table content can be restored from S3 itself, by listing all
+project IDs and their respective versions. It is also a secondary storage.  be fully restored from the metadata files
+found on S3. It is strictly a secondary storage.
 
 ## Post-deployment
 

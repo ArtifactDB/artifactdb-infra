@@ -54,20 +54,3 @@ apt install jq
 ```
 
 
-## TODO
-
-- use custom KMS key in launch template for nodegroup
-- fix the (probable) mess with Terraform/Terragrunt variables
-- how to deal with VPC (multiple, default) in general?
-- use a eksautomation as a second process to secure tagging and ALB registration?
-- version infra, eg. `infra.v3`, from git branch?
-- support for ingress controller NGINX?
-- auto-install local dependencies? like kubectl must match k8s version, but that info in from a variable
-- custom eks addon install as a module (refactor)
-- support for opensearch serverless with dedicated KMS per instance, collection using instance prefix, etc...
-- add more nodegroup, not ingressed
-- nodegroup <-> ALB circuler dep (ingress_port)
-- fix ssh node access denied
-
-
-
