@@ -8,7 +8,7 @@ data "aws_vpc" "default" {
 resource "aws_db_subnet_group" "subnet_grp" {
   description = "RDS DB subnet group"
   name        = "subgrp-${var.db_name}"
-  subnet_ids  = var.db_subnet_ids
+  subnet_ids  = var.subnet_ids
 }
 
 resource "aws_security_group" "sg_db" {
@@ -21,7 +21,7 @@ resource "aws_security_group" "sg_db" {
   }
 
   ingress {
-    cidr_blocks = var.db_ingress_cidr_blocks
+    cidr_blocks = var.ingress_cidr_blocks
     from_port   = var.db_port
     protocol    = "tcp"
     self        = "false"
@@ -32,29 +32,52 @@ resource "aws_security_group" "sg_db" {
   vpc_id = data.aws_vpc.default.id
 }
 
+resource "random_password" "master"{
+  length           = 16
+  special          = true
+  override_special = "_!%"
+}
+
+# TODO: use secret manager more globally?
+resource "aws_secretsmanager_secret" "password" {
+  # can't use GPRN notation with colon, not allowedim ASM
+  name = "gprn-${var.env}-artifactdb--secret-psql"
+  # trying to match ADB instance's secrets format/tags
+  tags = {
+    gprn = "gprn:${var.env}:artifactdb::secret:psql"
+    env = var.env
+    api_name = "artifactdb"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "password" {
+  secret_id = aws_secretsmanager_secret.password.id
+  secret_string = random_password.master.result
+}
+
 resource "aws_db_instance" "psql" {
-  identifier                            = var.db_name
-  allocated_storage                     = "5"
-  auto_minor_version_upgrade            = "true"
-  backup_retention_period               = "7"
-  copy_tags_to_snapshot                 = "true"
-  db_subnet_group_name                  = aws_db_subnet_group.subnet_grp.name
-  deletion_protection                   = "true"
-  engine                                = "postgres"
-  engine_version                        = var.db_version
-  instance_class                        = var.db_instance_type
-  multi_az                              = var.multi_az
-  port                                  = 5432
-  publicly_accessible                   = "false"
-  storage_type                          = "gp2"
-  username                              = "artifactdb"
-  password                              = "abc123"  # TODO:
-  vpc_security_group_ids                = [aws_security_group.sg_db.id]
-  skip_final_snapshot = "true"
-  #final_snapshot_identifier             = format("%s-%s-%s","final-snapshot-",var.db_name,formatdate("YYYYMMDDhhmmss", timestamp()))
-  # TODO: each adb instance has its own KMS, but we can't use one KMS per database, KMS is for the whole instance
-  # Use a olympus shared KMS for RDS (and opensearch?)
-  #kms_key_id                            = aws_iam_policy.kms_policy.arn
-  #storage_encrypted                     = "true"
+    allocated_storage                     = 20
+    auto_minor_version_upgrade            = true
+    availability_zone                     = "us-west-2b"
+    backup_retention_period               = 7
+    db_subnet_group_name                  = aws_db_subnet_group.subnet_grp.name  #"subgrp-artifactdb-dev"
+    deletion_protection                   = false
+    engine                                = "postgres"
+    engine_version                        = "13.7"
+    iam_database_authentication_enabled   = false
+    identifier                            = var.db_name
+    instance_class                        = var.instance_type
+    # TODO: can we use the custom KMS key instead of the aws/rds one? Needs permissions fine-tuning to allow using it
+    # for RDS (which is shared accross ADB instances) but not more than RDS.
+    #kms_key_id                            = "..."
+    multi_az                              = var.multi_az
+    password                              = aws_secretsmanager_secret_version.password.secret_string
+    port                                  = 5432
+    publicly_accessible                   = false
+    skip_final_snapshot                   = true
+    storage_encrypted                     = true
+    storage_type                          = "gp2"
+    username                              = "artifactdb"
+    vpc_security_group_ids                = [aws_security_group.sg_db.id]
 }
 
