@@ -81,7 +81,7 @@ uses it a the source of truth to generated sealed secrets.
 
 An ALB is used to "capture" incoming traffic and forward it to the ingress controller. A HTTPS listener can be used by
 declaring an SSL certificate, in which case the HTTP listener is configured to redirect traffic to HTTPS, instead of
-forwaring traffic.
+forwarding traffic.
 
 Multiple ALB can be used, for instance to declare an Internet-facing one, as well as a private one. Each have their own
 Target Groups, with special tags to identify which ALB and Target Groups must be used when the "ingressable" nodes

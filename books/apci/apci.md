@@ -1,8 +1,8 @@
 ---
 title: "ArtifactDB Platform: cloud infrastructure"
 subtitle: Deploying an ArtifactDB Platform in AWS
-author: [Sébastien Lelong / DSSC]
-date: "2023-04-07"
+author: [Sébastien Lelong / DSSC / Genentech]
+date: "2023-05-01 | Copyright © Genentech 2023"
 subject: "Cloud-based data management"
 keywords: [API, ArtifactDB, cloud, backend, devops]
 book: true
