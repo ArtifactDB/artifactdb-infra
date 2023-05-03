@@ -12,13 +12,36 @@ resource "aws_kms_alias" "kms_alias" {
 
 data "aws_iam_policy_document" "kms_key_policy" {
     statement {
-      sid = "kms_key_policy"
+      sid = "root"
       effect = "Allow"
       principals {
           type = "AWS"
           identifiers = ["arn:aws:iam::${var.account_id}:root"]
       }
       actions = ["kms:*"]
+      resources = ["*"]
+    }
+    statement {
+      sid = "autoscaling"
+      principals {
+          type = "AWS"
+          identifiers = [
+            "arn:aws:iam::841356604063:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
+            "arn:aws:iam::841356604063:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup"
+          ]
+      }
+      actions = [
+        "kms:ReEncryptTo",
+        "kms:ReEncryptFrom",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:GenerateDataKey",
+        "kms:Encrypt",
+        "kms:DescribeKey",
+        "kms:Decrypt",
+        "kms:CreateGrant",
+        "kms:ListGrants",
+        "kms:RevokeGrant"
+      ]
       resources = ["*"]
     }
 }

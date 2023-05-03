@@ -60,14 +60,61 @@ data "aws_iam_policy_document" "alb_register" {
   }
 }
 
+
+# We need to allow to use the default KMS key
+# setup on the account, in addition to our custom one
+# because the default k8s storage class doesn't specify any
+# and we would need to override it to set our own, or create
+# another class and reference it when needed. For now it's
+# simpler and safer to specify both keys to support all cases
+# out of the box.
+data "aws_ebs_default_kms_key" "current" {}
+data "aws_ebs_encryption_by_default" "current" {}
+
+# Allow node to provision EBS volume with encryption enabled
+data "aws_iam_policy_document" "ebs_encrypt" {
+  statement {
+    effect = "Allow"
+    actions = [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:RevokeGrant",
+        "kms:GenerateDataKey",
+        "kms:ReEncryptTo",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:DescribeKey",
+        "kms:GenerateDataKeyPairWithoutPlaintext",
+        "kms:GenerateDataKeyPair",
+        "kms:CreateGrant",
+        "kms:ReEncryptFrom",
+        "kms:ListGrants"
+    ]
+    resources = compact([
+        var.kms_arn,
+        data.aws_ebs_encryption_by_default.current.enabled ? data.aws_ebs_default_kms_key.current.key_arn : null
+    ])
+  }
+}
+
 resource "aws_iam_policy" "alb_register" {
   name   = "policy-alb-register-${var.cluster_name}"
   path   = "/"
   policy = data.aws_iam_policy_document.alb_register.json
 }
 
+resource "aws_iam_policy" "ebs_encrypt" {
+  name   = "policy-ebs-encrypt-${var.cluster_name}"
+  path   = "/"
+  policy = data.aws_iam_policy_document.ebs_encrypt.json
+}
+
 resource "aws_iam_role_policy_attachment" "alb_register" {
   policy_arn = aws_iam_policy.alb_register.arn
+  role       = aws_iam_role.node_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_encrypt" {
+  policy_arn = aws_iam_policy.ebs_encrypt.arn
   role       = aws_iam_role.node_role.name
 }
 
@@ -124,13 +171,12 @@ resource "aws_launch_template" "launch_template" {
     key_name                = var.ssh_key_name
     user_data               = base64encode(data.template_file.eks_user_data.rendered)
     update_default_version  = true
-    # TODO: specify custom KMS key (but then the instance doesn't start)
     block_device_mappings {
         device_name = "/dev/xvda"
         ebs {
             delete_on_termination = "true"
-            #encrypted             = "true"
-            #kms_key_id            = var.kms_arn
+            encrypted             = "true"
+            kms_key_id            = var.kms_arn
             volume_size           = var.volume_size
             volume_type           = var.volume_type
         }
@@ -185,6 +231,14 @@ resource "aws_eks_node_group" "nodegroup" {
     id = aws_launch_template.launch_template.id
     version = "$Latest"
   }
+
+  # pods declare tolerations when ingressed is needed, env=default means
+  # "deploy me on an ingressable node". Not well named, I know...
+  labels = merge(
+    var.ingressed ? {
+      env = "default"
+    } : {}
+)
 
   scaling_config {
         desired_size = var.desired_size
