@@ -1,6 +1,6 @@
 variable "vpc_id" {
   description = "VPC ID for some resources like SG"
-  type = string
+  type        = string
 }
 
 variable "lb_name" {
@@ -13,34 +13,34 @@ variable "cluster_name" {
 
 variable "logs_bucket" {
   description = "Bucket name where ALB access logs can be stored"
-  type = string
+  type        = string
 }
 
 variable "internal" {
   description = "Defines whether the ALB is privately (true) or publicly (false) accessible"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "ingress_cidr_blocks" {
   description = "List CIDR blocks from which traffic to ALB is allowed"
-  type = list
-  default = null
+  type        = list(string)
+  default     = null
 }
 
 variable "ingress_port" {
   description = "Ingress port to forward traffic to"
-  type = number
-  default = 30080
+  type        = number
+  default     = 30080
 }
 
 variable "subnet_ids" {
   description = "Subnet IDs where the ingressable nodes are deployed"
-  type = list
+  type        = list(string)
 }
 
 variable "ssl_cert_arn" {
   description = "SSL certificate, optional. If present, an HTTPS listener is added."
-  type = string
-  default = null
+  type        = string
+  default     = null
 }

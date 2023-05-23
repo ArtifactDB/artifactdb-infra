@@ -1,9 +1,9 @@
 output "ssh_key_arn" {
-  value     = aws_key_pair.kp.arn
+  value = aws_key_pair.kp.arn
 }
 
 output "ssh_key_name" {
-  value     = aws_key_pair.kp.key_name
+  value = aws_key_pair.kp.key_name
 }
 
 output "private_key" {

@@ -16,11 +16,35 @@ variable "vpc_id" {
 
 variable "deploy_subnets" {
   description = "List of subnets IDs the EKS cluster is deployed on. Usually private subnets"
-  type = list
+  type        = list(string)
 }
 
 variable "non_routable_subnets" {
   description = "List of subnets IDs the EKS cluster is using to deploy pods. Usually within 100.64.0.0/16"
-  type = list
+  type        = list(string)
 }
 
+variable "aws_profile" {
+  description = "AWS profile name"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}
+
+variable "platform_name" {
+  description = "ie. DemoDB"
+  type        = string
+}
+
+variable "environment" {
+  description = "ie. sandbox"
+  type        = string
+}
+
+variable "platform_id" {
+  description = "ie. demodb"
+  type        = string
+}

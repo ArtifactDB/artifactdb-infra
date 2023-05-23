@@ -7,7 +7,7 @@ variable "vpc_id" {
 }
 
 variable "db_port" {
-  type = number
+  type    = number
   default = 5432
 }
 
@@ -17,25 +17,25 @@ variable "db_name" {
 
 variable "db_version" {
   description = "DB engine version"
-  type = string
+  type        = string
 }
 
 variable "subnet_ids" {
   description = "Subnet IDs where the DB instance is deployed. Needs to follow DB subnet groups requirements (eg. at least 2 AZs)"
-  type = list
+  type        = list(string)
 }
 
 variable "instance_type" {
   description = "Instance type used to deployed the database (does not need to be beefy)"
-  type = string
+  type        = string
 }
 
 variable "multi_az" {
   description = "Specify whether the deployment is multi AZ or not (recommended for production)."
-  type = bool
+  type        = bool
 }
 
 variable "ingress_cidr_blocks" {
   description = "CIDR blocks allowed to access the DB instance"
-  type = list
+  type        = list(string)
 }

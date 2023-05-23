@@ -12,6 +12,6 @@ output "username" {
 }
 
 output "password" {
-  value = aws_db_instance.psql.password
+  value     = aws_db_instance.psql.password
   sensitive = true
 }

@@ -1,7 +1,28 @@
-variable "account_id" {
+variable "aws_account_id" {
   type = string
 }
 
 variable "cluster_name" {
   type = string
+}
+
+variable "aws_region" {
+  description = "ie. us-west-2"
+  type        = string
+}
+
+variable "platform_name" {
+  description = "ie. DemoDB"
+  type        = string
+}
+
+variable "platform_id" {
+  description = "ie. demodb"
+  type        = string
+}
+
+
+variable "environment" {
+  description = "ie. sandbox"
+  type        = string
 }

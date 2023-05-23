@@ -58,15 +58,15 @@ data "tls_certificate" "cert" {
   url = aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
 }
 resource "aws_iam_openid_connect_provider" "oidc" {
-  client_id_list = ["sts.amazonaws.com"]
+  client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.cert.certificates.0.sha1_fingerprint]
-  url = aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
+  url             = aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
 }
 
 # Addons
 resource "aws_eks_addon" "vpc_cni" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "vpc-cni"
+  cluster_name      = aws_eks_cluster.eks_cluster.name
+  addon_name        = "vpc-cni"
   resolve_conflicts = "OVERWRITE"
 }
 
@@ -95,18 +95,18 @@ resource "aws_eks_addon" "kube_proxy" {
 # Custom EKS addon install, for these (deployment based) we don't have nodes
 # yet so they stay in DEGRADED state, which is fine, but aws_eks_addon module wants ACTIVE only...
 resource "null_resource" "addon_ebs_csi" {
-    triggers = {
-        id = aws_eks_cluster.eks_cluster.arn
-    }
-    depends_on = [aws_eks_cluster.eks_cluster]
-    provisioner "local-exec" {
-        on_failure  = fail
-        when = create
-        interpreter = ["/bin/bash", "-c"]
-        command     = <<EOT
-            aws eks describe-addon --cluster-name artifactdb-dev --addon-name aws-ebs-csi-driver && exit 0
-            aws eks create-addon --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver
-            out=`aws eks wait addon-active --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver 2>&1`
+  triggers = {
+    id = aws_eks_cluster.eks_cluster.arn
+  }
+  depends_on = [aws_eks_cluster.eks_cluster]
+  provisioner "local-exec" {
+    on_failure  = fail
+    when        = create
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+            aws eks describe-addon --profile ${var.aws_profile} --region ${var.aws_region} --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver && exit 0
+            aws eks create-addon --profile ${var.aws_profile} --region ${var.aws_region} --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver
+            out=`aws eks wait addon-active --profile ${var.aws_profile} --region ${var.aws_region} --cluster-name ${var.cluster_name} --addon-name aws-ebs-csi-driver 2>&1`
             if [ "$?" != "0" ]
             then
                 echo "Addon not ACTIVE, check DEGRADED"
@@ -119,22 +119,22 @@ resource "null_resource" "addon_ebs_csi" {
             fi
             echo "************************************************************************************"
 EOT
-    }
+  }
 }
 
 resource "null_resource" "addon_coredns" {
-    triggers = {
-        id = aws_eks_cluster.eks_cluster.arn
-    }
-    depends_on = [aws_eks_cluster.eks_cluster]
-    provisioner "local-exec" {
-        on_failure  = fail
-        when = create
-        interpreter = ["/bin/bash", "-c"]
-        command     = <<EOT
-            aws eks describe-addon --cluster-name artifactdb-dev --addon-name coredns && exit 0
-            aws eks create-addon --cluster-name ${var.cluster_name} --addon-name coredns
-            out=`aws eks wait addon-active --cluster-name ${var.cluster_name} --addon-name coredns 2>&1`
+  triggers = {
+    id = aws_eks_cluster.eks_cluster.arn
+  }
+  depends_on = [aws_eks_cluster.eks_cluster]
+  provisioner "local-exec" {
+    on_failure  = fail
+    when        = create
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+            aws eks describe-addon --profile ${var.aws_profile} --region ${var.aws_region} --cluster-name ${var.cluster_name} --addon-name coredns && exit 0
+            aws eks create-addon --profile ${var.aws_profile} --region ${var.aws_region} --cluster-name ${var.cluster_name} --addon-name coredns
+            out=`aws eks wait addon-active --profile ${var.aws_profile} --region ${var.aws_region} --cluster-name ${var.cluster_name} --addon-name coredns 2>&1`
             if [ "$?" != "0" ]
             then
                 echo "Addon not ACTIVE, check DEGRADED"
@@ -147,25 +147,46 @@ resource "null_resource" "addon_coredns" {
             fi
             echo "************************************************************************************"
 EOT
-    }
+  }
 }
 
 data "aws_subnet" "deploy_subnets" {
-  for_each = "${toset(var.deploy_subnets)}"
-  id       = "${each.value}"
+  for_each = toset(var.deploy_subnets)
+  id       = each.value
 }
 
 # Allow k8s access from same subnets
 resource "aws_security_group_rule" "k8s_access" {
-    description = "k8s access"
-    type        = "ingress"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = values(data.aws_subnet.deploy_subnets).*.cidr_block
-    security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+  description       = "k8s access"
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = values(data.aws_subnet.deploy_subnets).*.cidr_block
+  security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
 }
 
+# Send secrets to SSM Parameter Store
+locals {
+  module = basename(abspath(path.module))
+}
+module "aws_ssm_secrets" {
+  source = "../ssm_secrets"
+
+  secrets = {
+    "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
+      "oidc_provider_arn" = aws_iam_openid_connect_provider.oidc.arn
+    })
+  }
+
+  kms_key_arn = var.kms_arn
+  tags = {
+    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env           = var.environment
+    platform_id   = var.platform_id
+    platform_name = var.platform_name
+  }
+}
 #### Enabling IAM Roles for Service Accounts  for aws-node pod
 #data "aws_iam_policy_document" "cluster_assume_role_policy" {
 #  statement {

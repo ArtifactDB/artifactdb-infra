@@ -16,18 +16,18 @@ data "aws_iam_policy_document" "es_policy" {
 }
 
 data "aws_subnet" "es_target" {
-  for_each = "${toset(var.access_subnet_ids)}"
-  id       = "${each.value}"
+  for_each = toset(var.access_subnet_ids)
+  id       = each.value
 }
 
 
 resource "aws_security_group" "es_sg" {
-  name        = "es-sg-${var.domain_name}"
-  vpc_id      = [for s in data.aws_subnet.es_target : s.vpc_id][0]
+  name   = "es-sg-${var.domain_name}"
+  vpc_id = [for s in data.aws_subnet.es_target : s.vpc_id][0]
   ingress {
-    from_port = 443
-    to_port   = 443
-    protocol  = "tcp"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = values(data.aws_subnet.es_target).*.cidr_block
   }
 }
@@ -37,16 +37,16 @@ resource "aws_opensearch_domain" "opensearch" {
   engine_version = var.engine_version
 
   cluster_config {
-    instance_type = var.instance_type
+    instance_type            = var.instance_type
     dedicated_master_enabled = var.dedicated_master_enabled
-    instance_count = var.instance_count
-    zone_awareness_enabled = var.zone_awareness_enabled
+    instance_count           = var.instance_count
+    zone_awareness_enabled   = var.zone_awareness_enabled
   }
 
   access_policies = data.aws_iam_policy_document.es_policy.json
 
   vpc_options {
-    subnet_ids = var.subnet_ids
+    subnet_ids         = var.subnet_ids
     security_group_ids = [aws_security_group.es_sg.id]
   }
 
@@ -59,6 +59,28 @@ resource "aws_opensearch_domain" "opensearch" {
     #throughput = var.volume_throughput
   }
 
+}
+
+# Send secrets to SSM Parameter Store
+locals {
+  module = basename(abspath(path.module))
+}
+module "aws_ssm_secrets" {
+  source = "../ssm_secrets"
+
+  secrets = {
+    "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
+      "endpoint" = aws_opensearch_domain.opensearch.endpoint
+    })
+  }
+
+  kms_key_arn = var.kms_arn
+  tags = {
+    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env           = var.environment
+    platform_id   = var.platform_id
+    platform_name = var.platform_name
+  }
 }
 
 # TODO: there's also a serverless option for opensearch, which supports KMS per collection (one instance has a dedicated KMS key)

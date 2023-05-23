@@ -1,7 +1,7 @@
 resource "aws_kms_key" "kms" {
-  description = "KMS key for infra wide server-side encryption"
+  description         = "KMS key for infra wide server-side encryption"
   enable_key_rotation = true
-  policy = data.aws_iam_policy_document.kms_key_policy.json
+  policy              = data.aws_iam_policy_document.kms_key_policy.json
 
 }
 
@@ -11,38 +11,61 @@ resource "aws_kms_alias" "kms_alias" {
 }
 
 data "aws_iam_policy_document" "kms_key_policy" {
-    statement {
-      sid = "root"
-      effect = "Allow"
-      principals {
-          type = "AWS"
-          identifiers = ["arn:aws:iam::${var.account_id}:root"]
-      }
-      actions = ["kms:*"]
-      resources = ["*"]
+  statement {
+    sid    = "root"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${var.aws_account_id}:root"]
     }
-    statement {
-      sid = "autoscaling"
-      principals {
-          type = "AWS"
-          identifiers = [
-            "arn:aws:iam::841356604063:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
-            "arn:aws:iam::841356604063:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup"
-          ]
-      }
-      actions = [
-        "kms:ReEncryptTo",
-        "kms:ReEncryptFrom",
-        "kms:GenerateDataKeyWithoutPlaintext",
-        "kms:GenerateDataKey",
-        "kms:Encrypt",
-        "kms:DescribeKey",
-        "kms:Decrypt",
-        "kms:CreateGrant",
-        "kms:ListGrants",
-        "kms:RevokeGrant"
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+  statement {
+    sid = "autoscaling"
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${var.aws_account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
+        "arn:aws:iam::${var.aws_account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup"
       ]
-      resources = ["*"]
     }
+    actions = [
+      "kms:ReEncryptTo",
+      "kms:ReEncryptFrom",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:GenerateDataKey",
+      "kms:Encrypt",
+      "kms:DescribeKey",
+      "kms:Decrypt",
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant"
+    ]
+    resources = ["*"]
+  }
+}
+
+locals {
+  module = basename(abspath(path.module))
+}
+
+module "aws_ssm_secrets" {
+  depends_on = [aws_kms_key.kms]
+  source     = "../ssm_secrets"
+
+  secrets = {
+    "/gprn/${var.environment}/platform/${var.platform_name}/secret/${local.module}" = jsonencode({
+      "kms_arn" = aws_kms_key.kms.arn
+    })
+  }
+
+  kms_key_arn = aws_kms_key.kms.arn
+  tags = {
+    gprn          = "gprn:${var.environment}:platform:${var.platform_name}:secret:${local.module}"
+    env           = var.environment
+    platform_id   = var.platform_id
+    platform_name = var.platform_name
+  }
 }
 
