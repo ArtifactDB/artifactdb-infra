@@ -55,14 +55,14 @@ module "aws_ssm_secrets" {
   source     = "../ssm_secrets"
 
   secrets = {
-    "/gprn/${var.environment}/platform/${var.platform_name}/secret/${local.module}" = jsonencode({
+    "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
       "kms_arn" = aws_kms_key.kms.arn
     })
   }
 
   kms_key_arn = aws_kms_key.kms.arn
   tags = {
-    gprn          = "gprn:${var.environment}:platform:${var.platform_name}:secret:${local.module}"
+    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
     env           = var.environment
     platform_id   = var.platform_id
     platform_name = var.platform_name
