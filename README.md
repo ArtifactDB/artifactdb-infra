@@ -53,6 +53,55 @@ To process some output from kubectl.
 apt install jq
 ```
 
+## Procedures
+
+### Migrating SealedSecret certificates
+
+Bt default, SealedSecret controller is installed with certificates generated automatically. In the context of a platform
+upgrade, deploying sealed secrets encrypted with the old controller (old platform) will fail with an error on the
+object: `Failed to unseal: no key could decrypt secret`. One option is the re-encrypt the secrets using the controller
+and its new certificate but it brings complexity in the migration process. The other option is to replace the new
+certificates with the old ones, from the old platform.
+
+SealedSecret rotates keys every 30 days by default, which complifies the migration: all used keys need to be copied
+over. See https://ismailyenigul.medium.com/take-backup-of-all-sealed-secrets-keys-or-re-encrypt-regularly-297367b3443.
+
+Pointing to old cluster:
+```
+kubectl -n kube-system get secret -l sealedsecrets.bitnami.com/sealed-secrets-key=active -o yaml | kubectl neat  > allsealkeys.yml
+```
+
+Now pointing to new cluster and restore:
+```
+kubectl -n kube-system apply -f allsealkeys.yml
+```
+
+Restart the controller so it can find the restored keys (delete the pod, it gets deployed again). In the logs we can
+see:
+```│ 2023/05/25 20:21:31 Searching for existing private keys                                                                                                                                                                                                                                                                                                                                                                                 │
+2023/05/25 20:21:31 ----- sealed-secrets-key9pjzj
+2023/05/25 20:21:31 ----- sealed-secrets-key2jmx9
+2023/05/25 20:21:31 ----- sealed-secrets-key5hbbm
+2023/05/25 20:21:31 ----- sealed-secrets-key5tmjn
+2023/05/25 20:21:31 ----- sealed-secrets-key8ccdq
+2023/05/25 20:21:31 ----- sealed-secrets-key5c4gg
+2023/05/25 20:21:31 ----- sealed-secrets-keycp2km
+2023/05/25 20:21:31 ----- sealed-secrets-keyd6lb2
+2023/05/25 20:21:31 ----- sealed-secrets-keyd7h9x
+2023/05/25 20:21:31 ----- sealed-secrets-keydwhxs
+2023/05/25 20:21:31 ----- sealed-secrets-keyfrmd6
+2023/05/25 20:21:31 ----- sealed-secrets-keyglq6r
+2023/05/25 20:21:31 ----- sealed-secrets-keyh4wgz
+2023/05/25 20:21:31 ----- sealed-secrets-keyhclzv
+2023/05/25 20:21:31 ----- sealed-secrets-keyjjmpn
+2023/05/25 20:21:31 ----- sealed-secrets-keymblzl
+2023/05/25 20:21:31 ----- sealed-secrets-keyrfz4m
+2023/05/25 20:21:31 ----- sealed-secrets-keyvss66
+2023/05/25 20:21:31 ----- sealed-secrets-keyzsfnf
+```
+
+Sealed secrets are now properly unsealed, describing a sealed secret object, we see: `SealedSecret unsealed
+successfully`.
 
 ## TODO
 
