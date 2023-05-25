@@ -20,10 +20,10 @@ resource "aws_s3_bucket" "lb_logs" {
   bucket = var.lb_logs_bucket
 }
 
-resource "aws_s3_bucket_acl" "acl" {
-  bucket = aws_s3_bucket.lb_logs.id
-  acl    = "private"
-}
+#resource "aws_s3_bucket_acl" "acl" {
+#  bucket = aws_s3_bucket.lb_logs.id
+#  acl    = "private"
+#}
 
 resource "aws_s3_bucket_policy" "lb_logs_policy" {
   bucket     = aws_s3_bucket.lb_logs.id
@@ -34,7 +34,7 @@ resource "aws_s3_bucket_policy" "lb_logs_policy" {
 resource "aws_s3_bucket_ownership_controls" "s3_bucket_acl_ownership" {
   bucket = aws_s3_bucket.lb_logs.id
   rule {
-    object_ownership = "BucketOwnerEnforced"
+    object_ownership = "BucketOwnerPreferred"
   }
 }
 

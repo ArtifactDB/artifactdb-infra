@@ -28,10 +28,11 @@ resource "aws_security_group" "es_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = values(data.aws_subnet.es_target).*.cidr_block
+    cidr_blocks = values(data.aws_subnet.es_target).*.cidr_block //extra_cidr_block variable -> if list not empty true add 10.0.0.8 ip
   }
 }
 
+# TODO I want to be able to provide CIDR block to access
 resource "aws_opensearch_domain" "opensearch" {
   domain_name    = var.domain_name
   engine_version = var.engine_version

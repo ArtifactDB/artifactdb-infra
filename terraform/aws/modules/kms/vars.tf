@@ -26,3 +26,8 @@ variable "environment" {
   description = "ie. sandbox"
   type        = string
 }
+
+variable "kms_arn" {
+  description = "The ARN of the existing KMS key"
+  default     = ""  # Set a default value to avoid "value is null" error.
+}

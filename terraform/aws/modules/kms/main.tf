@@ -1,14 +1,21 @@
 resource "aws_kms_key" "kms" {
-  description         = "KMS key for infra wide server-side encryption"
-  enable_key_rotation = true
-  policy              = data.aws_iam_policy_document.kms_key_policy.json
+  count                = var.kms_arn == "" ? 1 : 0
+  description          = "KMS key for infra wide server-side encryption"
+  enable_key_rotation  = true
+  policy               = data.aws_iam_policy_document.kms_key_policy.json
+}
 
+data "aws_kms_key" "existing_kms" {
+  count = var.kms_arn == "" ? 0 : 1
+  key_id = var.kms_arn
 }
 
 resource "aws_kms_alias" "kms_alias" {
   name          = "alias/kms-${var.cluster_name}"
-  target_key_id = aws_kms_key.kms.key_id
+  target_key_id = var.kms_arn == "" ? aws_kms_key.kms[0].key_id : data.aws_kms_key.existing_kms[0].key_id
 }
+
+locals {kms_arn = var.kms_arn == "" ? aws_kms_key.kms[0].arn : data.aws_kms_key.existing_kms[0].arn}
 
 data "aws_iam_policy_document" "kms_key_policy" {
   statement {
@@ -51,16 +58,15 @@ locals {
 }
 
 module "aws_ssm_secrets" {
-  depends_on = [aws_kms_key.kms]
   source     = "../ssm_secrets"
 
   secrets = {
     "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
-      "kms_arn" = aws_kms_key.kms.arn
+      "kms_arn" = local.kms_arn
     })
   }
 
-  kms_key_arn = aws_kms_key.kms.arn
+  kms_key_arn = local.kms_arn
   tags = {
     gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
     env           = var.environment

@@ -9,7 +9,7 @@ resource "aws_iam_role" "eks_cluster_role" {
   max_session_duration = 3600
   name                 = "eks-cluster-role-${var.cluster_name}"
   path                 = "/"
-
+  lifecycle {ignore_changes = [permissions_boundary]}
 }
 
 

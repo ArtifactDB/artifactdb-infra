@@ -39,3 +39,22 @@ variable "ingress_cidr_blocks" {
   description = "CIDR blocks allowed to access the DB instance"
   type        = list(string)
 }
+
+variable "platform_name" {
+  description = "ie. DemoDB"
+  type        = string
+}
+
+variable "environment" {
+  description = "ie. sandbox"
+  type        = string
+}
+
+variable "platform_id" {
+  description = "ie. demodb"
+  type        = string
+}
+
+variable "kms_arn" {
+  type = string
+}

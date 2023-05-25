@@ -11,7 +11,7 @@ resource "aws_iam_role" "node_role" {
     }]
     Version = "2012-10-17"
   })
-
+  lifecycle {ignore_changes = [permissions_boundary]}
 }
 resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"

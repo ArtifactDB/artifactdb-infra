@@ -38,21 +38,29 @@ resource "random_password" "master" {
   override_special = "_!%"
 }
 
-# TODO: use secret manager more globally? See "post" module
-resource "aws_secretsmanager_secret" "password" {
-  # can't use GPRN notation with colon, not allowedim ASM
-  name = "gprn-${var.env}-artifactdb--secret-psql"
-  # trying to match ADB instance's secrets format/tags
-  tags = {
-    gprn     = "gprn:${var.env}:artifactdb::secret:psql"
-    env      = var.env
-    api_name = "artifactdb"
-  }
+locals {
+  module = basename(abspath(path.module))
 }
 
-resource "aws_secretsmanager_secret_version" "password" {
-  secret_id     = aws_secretsmanager_secret.password.id
-  secret_string = random_password.master.result
+module "aws_ssm_secrets" {
+  source = "../ssm_secrets"
+
+  secrets = {
+    "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
+      "address" = aws_db_instance.psql.address,
+      "username" = aws_db_instance.psql.username,
+      "password" = aws_db_instance.psql.password,
+      "endpoint" = aws_db_instance.psql.endpoint
+    })
+  }
+
+  kms_key_arn = var.kms_arn
+  tags = {
+    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env           = var.environment
+    platform_id   = var.platform_id
+    platform_name = var.platform_name
+  }
 }
 
 resource "aws_db_instance" "psql" {
@@ -71,7 +79,7 @@ resource "aws_db_instance" "psql" {
   # for RDS (which is shared accross ADB instances) but not more than RDS.
   #kms_key_id                            = "..."
   multi_az               = var.multi_az
-  password               = aws_secretsmanager_secret_version.password.secret_string
+  password               = random_password.master.result
   port                   = 5432
   publicly_accessible    = false
   skip_final_snapshot    = true
