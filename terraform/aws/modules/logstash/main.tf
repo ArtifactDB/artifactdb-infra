@@ -1,5 +1,5 @@
 locals {
-  image_name = "gp/logstash"
+  image_name = "logstash"
   image_tag  = "opensearch"
 }
 
@@ -68,6 +68,7 @@ resource "aws_iam_policy" "elasticsearch_logstash" {
 
 resource "aws_iam_role" "logstash_role" {
   name = "logstash-role"
+  lifecycle {ignore_changes = [permissions_boundary]}
 
   assume_role_policy = <<EOF
 {
@@ -95,7 +96,7 @@ module "docker_build_and_push" {
   aws_region      = var.aws_region
   aws_account_id  = var.aws_account_id
   aws_profile     = var.aws_profile
-  image_name      = local.image_name
+  image_name      = "${var.ecr_repository_name}/${local.image_name}"
   image_tag       = local.image_tag
   dockerfile_path = "./"
 }
@@ -118,7 +119,7 @@ resource "helm_release" "logstash" {
   create_namespace = true
 
   values = [yamlencode({
-    image    = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${local.image_name}"
+    image    = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}/${local.image_name}"
     imageTag = local.image_tag
     rbac = {
       create = true

@@ -34,3 +34,7 @@ variable "aws_profile" {
   description = "AWS profile name"
   type        = string
 }
+
+variable "ecr_repository_name" {
+  type = string
+}
