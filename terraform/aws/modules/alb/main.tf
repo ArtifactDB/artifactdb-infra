@@ -22,7 +22,6 @@ resource "aws_security_group_rule" "https" {
 }
 
 resource "aws_security_group_rule" "http" {
-  count             = var.ssl_cert_arn == null ? 1 : 0
   security_group_id = aws_security_group.ingress.id
   type              = "ingress"
   cidr_blocks       = var.ingress_cidr_blocks
