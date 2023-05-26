@@ -1,4 +1,9 @@
+locals {
+  create_iam_role = var.eks_node_group_role_arn == "" ? 1 : 0
+}
+
 resource "aws_iam_role" "node_role" {
+  count = local.create_iam_role
   name = "eks-node-group-${var.cluster_name}"
 
   assume_role_policy = jsonencode({
@@ -14,33 +19,39 @@ resource "aws_iam_role" "node_role" {
   lifecycle {ignore_changes = [permissions_boundary]}
 }
 resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
+  count = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.node_role.name
+  role       = aws_iam_role.node_role[0].name
 
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
+  count = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.node_role.name
+  role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
+  count = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.node_role.name
+  role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEBSCSIDriverPolicy" {
+  count = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.node_role.name
+  role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
+  count = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
-  role       = aws_iam_role.node_role.name
+  role       = aws_iam_role.node_role[0].name
 }
 
 # Allow ingressable node to self-register to ALB when booting
 data "aws_iam_policy_document" "alb_register" {
+  count = local.create_iam_role
   statement {
     effect    = "Allow"
     actions   = ["elasticloadbalancing:RegisterTargets"]
@@ -68,11 +79,12 @@ data "aws_iam_policy_document" "alb_register" {
 # another class and reference it when needed. For now it's
 # simpler and safer to specify both keys to support all cases
 # out of the box.
-data "aws_ebs_default_kms_key" "current" {}
-data "aws_ebs_encryption_by_default" "current" {}
+data "aws_ebs_default_kms_key" "current" {count = local.create_iam_role}
+data "aws_ebs_encryption_by_default" "current" {count = local.create_iam_role}
 
 # Allow node to provision EBS volume with encryption enabled
 data "aws_iam_policy_document" "ebs_encrypt" {
+  count = local.create_iam_role
   statement {
     effect = "Allow"
     actions = [
@@ -91,31 +103,35 @@ data "aws_iam_policy_document" "ebs_encrypt" {
     ]
     resources = compact([
       var.kms_arn,
-      data.aws_ebs_encryption_by_default.current.enabled ? data.aws_ebs_default_kms_key.current.key_arn : null
+      data.aws_ebs_encryption_by_default.current[0].enabled ? data.aws_ebs_default_kms_key.current[0].key_arn : null
     ])
   }
 }
 
 resource "aws_iam_policy" "alb_register" {
+  count = local.create_iam_role
   name   = "policy-alb-register-${var.cluster_name}"
   path   = "/"
-  policy = data.aws_iam_policy_document.alb_register.json
+  policy = data.aws_iam_policy_document.alb_register[0].json
 }
 
 resource "aws_iam_policy" "ebs_encrypt" {
+  count = local.create_iam_role
   name   = "policy-ebs-encrypt-${var.cluster_name}"
   path   = "/"
-  policy = data.aws_iam_policy_document.ebs_encrypt.json
+  policy = data.aws_iam_policy_document.ebs_encrypt[0].json
 }
 
 resource "aws_iam_role_policy_attachment" "alb_register" {
-  policy_arn = aws_iam_policy.alb_register.arn
-  role       = aws_iam_role.node_role.name
+  count = local.create_iam_role
+  policy_arn = aws_iam_policy.alb_register[0].arn
+  role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_encrypt" {
-  policy_arn = aws_iam_policy.ebs_encrypt.arn
-  role       = aws_iam_role.node_role.name
+  count = local.create_iam_role
+  policy_arn = aws_iam_policy.ebs_encrypt[0].arn
+  role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_security_group" "ingress" {
@@ -223,7 +239,7 @@ resource "aws_eks_node_group" "nodegroup" {
   version         = var.eks_ami == null ? var.cluster_version : null
   ami_type        = var.eks_ami == null ? var.ami_type : null
   node_group_name = var.node_group_name
-  node_role_arn   = aws_iam_role.node_role.arn
+  node_role_arn   = local.create_iam_role == 1 ? aws_iam_role.node_role[0].arn : var.eks_node_group_role_arn
   instance_types  = var.instance_types
   subnet_ids      = var.subnet_ids
 

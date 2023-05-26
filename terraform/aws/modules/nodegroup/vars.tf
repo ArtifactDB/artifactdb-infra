@@ -128,3 +128,9 @@ variable "lb_security_groups" {
   type        = list(string)
   default     = []
 }
+
+variable "eks_node_group_role_arn" {
+  description = "EKS nodegroup IAM role. If passed new one is not created."
+  type        = string
+  default     = ""
+}
