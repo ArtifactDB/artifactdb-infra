@@ -1,3 +1,9 @@
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.eks_cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks_cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster_auth.token
+}
+
 locals {
   image_name = "logstash"
   image_tag  = "opensearch"
@@ -24,7 +30,7 @@ data "tls_certificate" "oidc_cert" {
 }
 
 resource "aws_iam_policy" "s3_logstash" {
-  name        = "s3_logstash_policy"
+  name        = "s3_logstash_policy_${var.environment}"
   description = "Policy for Logstash to access S3"
 
   policy = jsonencode({
@@ -46,7 +52,7 @@ resource "aws_iam_policy" "s3_logstash" {
 }
 
 resource "aws_iam_policy" "elasticsearch_logstash" {
-  name        = "elasticsearch_logstash_policy"
+  name        = "elasticsearch_logstash_policy_${var.environment}"
   description = "Policy for Logstash to access Elasticsearch"
 
   policy = jsonencode({
@@ -67,7 +73,7 @@ resource "aws_iam_policy" "elasticsearch_logstash" {
 }
 
 resource "aws_iam_role" "logstash_role" {
-  name = "logstash-role"
+  name = "logstash-role-${var.environment}"
   lifecycle {ignore_changes = [permissions_boundary]}
 
   assume_role_policy = <<EOF
@@ -82,7 +88,7 @@ resource "aws_iam_role" "logstash_role" {
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "${replace(var.oidc_provider_url, "https://", "")}:sub": "system:serviceaccount:logstash:logstash"
+          "${replace(var.oidc_provider_url, "https://", "")}:sub": "system:serviceaccount:${var.helm_deployment_namespace}:logstash-${var.environment}"
         }
       }
     }
@@ -111,12 +117,18 @@ resource "aws_iam_role_policy_attachment" "logstash_s3_access" {
   policy_arn = aws_iam_policy.s3_logstash.arn
 }
 
+resource "kubernetes_namespace" "logstash" {
+  metadata {
+    name = var.helm_deployment_namespace
+  }
+}
+
 resource "helm_release" "logstash" {
-  name             = "logstash"
-  namespace        = "logstash"
+  depends_on = [module.docker_build_and_push, kubernetes_namespace.logstash]
+  name             = var.helm_deployment_name
+  namespace        = var.helm_deployment_namespace
   repository       = "https://helm.elastic.co"
   chart            = "logstash"
-  create_namespace = true
 
   values = [yamlencode({
     image    = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}/${local.image_name}"
@@ -126,7 +138,7 @@ resource "helm_release" "logstash" {
       serviceAccountAnnotations = {
         "eks.amazonaws.com/role-arn" = aws_iam_role.logstash_role.arn
       }
-      serviceAccountName = "logstash"
+      serviceAccountName = "logstash-${var.environment}"
     }
     persistence = {
       enabled = true
@@ -164,7 +176,7 @@ resource "helm_release" "logstash" {
     }
     output {
       opensearch {
-        hosts => ["https://${var.opensearch_endpoint}:443"]
+        hosts => ["${var.opensearch_endpoint}:443"]
         ssl_certificate_verification => true
         index => "${var.lb_logs_bucket}_%%{+YYYY.MM}"
       }

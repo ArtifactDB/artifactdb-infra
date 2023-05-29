@@ -25,6 +25,7 @@ resource "aws_security_group" "extra_sg" {
 
   name   = "eks-cluster-sg-${var.cluster_name}-extra"
   vpc_id = var.vpc_id
+  lifecycle {ignore_changes = [tags]}
 }
 
 resource "aws_eks_cluster" "eks_cluster" {

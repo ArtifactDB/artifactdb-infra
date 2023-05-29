@@ -38,3 +38,16 @@ variable "aws_profile" {
 variable "ecr_repository_name" {
   type = string
 }
+
+variable "helm_deployment_name" {
+  type = string
+}
+
+variable "helm_deployment_namespace" {
+  type = string
+}
+
+variable "environment" {
+  description = "ie. sandbox"
+  type        = string
+}

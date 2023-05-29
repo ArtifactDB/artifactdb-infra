@@ -4,7 +4,7 @@ resource "aws_ecr_repository" "repository" {
 
 resource "null_resource" "docker_build_and_push" {
   triggers = {
-    build_number = timestamp()
+    dockerfile_hash = sha1(file("${var.dockerfile_path}/Dockerfile"))
   }
 
   provisioner "local-exec" {
