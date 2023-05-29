@@ -140,6 +140,7 @@ resource "aws_security_group" "ingress" {
   description = "ingress to k8s nodes"
   vpc_id      = var.vpc_id
   name        = "eks-ingress-sg-${var.cluster_name}"
+  lifecycle {ignore_changes = [tags]}
 
   egress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -185,6 +186,7 @@ resource "aws_launch_template" "launch_template" {
   key_name               = var.ssh_key_name
   user_data              = base64encode(data.template_file.eks_user_data.rendered)
   update_default_version = true
+  lifecycle {ignore_changes = [tags]}
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
@@ -212,6 +214,8 @@ data "aws_subnet" "ssh_target" {
 resource "aws_security_group" "remote_ssh" {
   description = "Defines SG from which SSH to nodes is allowed"
   vpc_id      = var.vpc_id
+  lifecycle {ignore_changes = [tags]}
+
   egress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 0

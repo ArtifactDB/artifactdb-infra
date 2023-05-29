@@ -30,7 +30,7 @@ data "tls_certificate" "oidc_cert" {
 }
 
 resource "aws_iam_policy" "s3_logstash" {
-  name        = "s3_logstash_policy_${var.environment}"
+  name        = "s3_logstash_policy_${var.logstash_environment}"
   description = "Policy for Logstash to access S3"
 
   policy = jsonencode({
@@ -52,7 +52,7 @@ resource "aws_iam_policy" "s3_logstash" {
 }
 
 resource "aws_iam_policy" "elasticsearch_logstash" {
-  name        = "elasticsearch_logstash_policy_${var.environment}"
+  name        = "elasticsearch_logstash_policy_${var.logstash_environment}"
   description = "Policy for Logstash to access Elasticsearch"
 
   policy = jsonencode({
@@ -73,7 +73,7 @@ resource "aws_iam_policy" "elasticsearch_logstash" {
 }
 
 resource "aws_iam_role" "logstash_role" {
-  name = "logstash-role-${var.environment}"
+  name = "logstash-role-${var.logstash_environment}"
   lifecycle {ignore_changes = [permissions_boundary]}
 
   assume_role_policy = <<EOF
@@ -88,7 +88,7 @@ resource "aws_iam_role" "logstash_role" {
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "${replace(var.oidc_provider_url, "https://", "")}:sub": "system:serviceaccount:${var.helm_deployment_namespace}:logstash-${var.environment}"
+          "${replace(var.oidc_provider_url, "https://", "")}:sub": "system:serviceaccount:${var.helm_deployment_namespace}:logstash-${var.logstash_environment}"
         }
       }
     }
@@ -138,7 +138,7 @@ resource "helm_release" "logstash" {
       serviceAccountAnnotations = {
         "eks.amazonaws.com/role-arn" = aws_iam_role.logstash_role.arn
       }
-      serviceAccountName = "logstash-${var.environment}"
+      serviceAccountName = "logstash-${var.logstash_environment}"
     }
     persistence = {
       enabled = true

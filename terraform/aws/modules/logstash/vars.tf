@@ -47,6 +47,10 @@ variable "helm_deployment_namespace" {
   type = string
 }
 
+variable "logstash_environment" {
+  type = string
+}
+
 variable "environment" {
   description = "ie. sandbox"
   type        = string

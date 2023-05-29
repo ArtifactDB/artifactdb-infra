@@ -17,6 +17,7 @@ data "aws_iam_policy_document" "s3_lb_write" {
 
 
 resource "aws_s3_bucket" "lb_logs" {
+  lifecycle {ignore_changes = [tags]}
   bucket = var.lb_logs_bucket
 }
 
@@ -55,7 +56,5 @@ module "aws_ssm_secrets" {
   tags = {
     gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
     env           = var.environment
-    platform_id   = var.platform_id
-    platform_name = var.platform_name
   }
 }
