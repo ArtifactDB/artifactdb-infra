@@ -70,8 +70,6 @@ module "aws_ssm_secrets" {
   tags = {
     gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
     env           = var.environment
-    platform_id   = var.platform_id
-    platform_name = var.platform_name
   }
 }
 
