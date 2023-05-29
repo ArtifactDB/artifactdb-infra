@@ -134,10 +134,13 @@ resource "aws_iam_role_policy_attachment" "ebs_encrypt" {
   role       = aws_iam_role.node_role[0].name
 }
 
+
 resource "aws_security_group" "ingress" {
   count       = var.ingressed ? 1 : 0
   description = "ingress to k8s nodes"
   vpc_id      = var.vpc_id
+  name        = "eks-ingress-sg-${var.cluster_name}"
+
   egress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 0
@@ -152,21 +155,16 @@ resource "aws_security_group" "ingress" {
     protocol    = "tcp"
   }
 
-  name = "eks-ingress-sg-${var.cluster_name}"
+  dynamic "ingress" {
+    for_each = toset(var.lb_security_groups)
+    content {
+      from_port   = var.ingress_port
+      to_port     = var.ingress_port
+      protocol    = "tcp"
+      security_groups = [ingress.value]
+    }
+  }
 }
-
-# Adding ALB SG in nodegroup ingress SG to allow the ALB to forward traffic to ingressable node
-resource "aws_security_group_rule" "forward" {
-  for_each                 = toset(var.lb_security_groups)
-  security_group_id        = aws_security_group.ingress[0].id
-  source_security_group_id = each.value
-  type                     = "ingress"
-  from_port                = var.ingress_port
-  to_port                  = var.ingress_port
-  protocol                 = "TCP"
-}
-
-
 
 # Self-annotation with correct ENIConfig to enable pod assignment
 data "template_file" "eks_user_data" {
