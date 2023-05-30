@@ -62,7 +62,7 @@ resource "helm_release" "traefik" {
 
   set {
     name = "globalArguments"
-    value = "[]"
+    value = "null"
   }
 
   set {
