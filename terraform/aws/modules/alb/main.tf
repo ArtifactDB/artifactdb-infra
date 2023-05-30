@@ -2,7 +2,7 @@ resource "aws_security_group" "ingress" {
   description = "Allows access to the load balancer"
   name        = "eks-alb-sg-${var.lb_name}"
   vpc_id      = var.vpc_id
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
 
   egress {
     cidr_blocks = ["0.0.0.0/0"]

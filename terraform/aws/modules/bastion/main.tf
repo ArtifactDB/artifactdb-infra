@@ -16,14 +16,14 @@ resource "aws_instance" "bastion" {
   tags = {
     Name = "bastion-host-${var.cluster_name}"
   }
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg-${var.cluster_name}"
   description = "Security group for the bastion host"
   vpc_id      = var.vpc_id
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
 
   ingress {
     from_port = 22

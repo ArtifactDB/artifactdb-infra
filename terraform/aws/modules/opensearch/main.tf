@@ -22,7 +22,7 @@ data "aws_subnet" "es_target" {
 
 
 resource "aws_security_group" "es_sg" {
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
   name   = "es-sg-${var.domain_name}"
   vpc_id = [for s in data.aws_subnet.es_target : s.vpc_id][0]
   ingress {
@@ -78,8 +78,8 @@ module "aws_ssm_secrets" {
 
   kms_key_arn = var.kms_arn
   tags = {
-    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
-    env           = var.environment
+    gprn = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env  = var.environment
   }
 }
 

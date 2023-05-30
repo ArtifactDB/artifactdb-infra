@@ -74,7 +74,7 @@ resource "aws_iam_policy" "elasticsearch_logstash" {
 
 resource "aws_iam_role" "logstash_role" {
   name = "logstash-role-${var.logstash_environment}"
-  lifecycle {ignore_changes = [permissions_boundary]}
+  lifecycle { ignore_changes = [permissions_boundary] }
 
   assume_role_policy = <<EOF
 {
@@ -125,10 +125,10 @@ resource "kubernetes_namespace" "logstash" {
 
 resource "helm_release" "logstash" {
   depends_on = [module.docker_build_and_push, kubernetes_namespace.logstash]
-  name             = var.helm_deployment_name
-  namespace        = var.helm_deployment_namespace
-  repository       = "https://helm.elastic.co"
-  chart            = "logstash"
+  name       = var.helm_deployment_name
+  namespace  = var.helm_deployment_namespace
+  repository = "https://helm.elastic.co"
+  chart      = "logstash"
 
   values = [yamlencode({
     image    = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}/${local.image_name}"

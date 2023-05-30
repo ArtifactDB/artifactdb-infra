@@ -4,7 +4,7 @@ locals {
 
 resource "aws_iam_role" "node_role" {
   count = local.create_iam_role
-  name = "eks-node-group-${var.cluster_name}"
+  name  = "eks-node-group-${var.node_group_name}-${var.cluster_name}"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -16,35 +16,35 @@ resource "aws_iam_role" "node_role" {
     }]
     Version = "2012-10-17"
   })
-  lifecycle {ignore_changes = [permissions_boundary]}
+  lifecycle { ignore_changes = [permissions_boundary] }
 }
 resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.node_role[0].name
 
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEBSCSIDriverPolicy" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
   role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   role       = aws_iam_role.node_role[0].name
 }
@@ -79,8 +79,8 @@ data "aws_iam_policy_document" "alb_register" {
 # another class and reference it when needed. For now it's
 # simpler and safer to specify both keys to support all cases
 # out of the box.
-data "aws_ebs_default_kms_key" "current" {count = local.create_iam_role}
-data "aws_ebs_encryption_by_default" "current" {count = local.create_iam_role}
+data "aws_ebs_default_kms_key" "current" { count = local.create_iam_role }
+data "aws_ebs_encryption_by_default" "current" { count = local.create_iam_role }
 
 # Allow node to provision EBS volume with encryption enabled
 data "aws_iam_policy_document" "ebs_encrypt" {
@@ -109,27 +109,27 @@ data "aws_iam_policy_document" "ebs_encrypt" {
 }
 
 resource "aws_iam_policy" "alb_register" {
-  count = local.create_iam_role
-  name   = "policy-alb-register-${var.cluster_name}"
+  count  = local.create_iam_role
+  name   = "policy-alb-register-${var.node_group_name}-${var.cluster_name}"
   path   = "/"
   policy = data.aws_iam_policy_document.alb_register[0].json
 }
 
 resource "aws_iam_policy" "ebs_encrypt" {
-  count = local.create_iam_role
-  name   = "policy-ebs-encrypt-${var.cluster_name}"
+  count  = local.create_iam_role
+  name   = "policy-ebs-encrypt-${var.node_group_name}-${var.cluster_name}"
   path   = "/"
   policy = data.aws_iam_policy_document.ebs_encrypt[0].json
 }
 
 resource "aws_iam_role_policy_attachment" "alb_register" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = aws_iam_policy.alb_register[0].arn
   role       = aws_iam_role.node_role[0].name
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_encrypt" {
-  count = local.create_iam_role
+  count      = local.create_iam_role
   policy_arn = aws_iam_policy.ebs_encrypt[0].arn
   role       = aws_iam_role.node_role[0].name
 }
@@ -139,8 +139,8 @@ resource "aws_security_group" "ingress" {
   count       = var.ingressed ? 1 : 0
   description = "ingress to k8s nodes"
   vpc_id      = var.vpc_id
-  name        = "eks-ingress-sg-${var.cluster_name}"
-  lifecycle {ignore_changes = [tags]}
+  name        = "eks-ingress-sg-${var.node_group_name}-${var.cluster_name}"
+  lifecycle { ignore_changes = [tags] }
 
   egress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -159,9 +159,9 @@ resource "aws_security_group" "ingress" {
   dynamic "ingress" {
     for_each = toset(var.lb_security_groups)
     content {
-      from_port   = var.ingress_port
-      to_port     = var.ingress_port
-      protocol    = "tcp"
+      from_port       = var.ingress_port
+      to_port         = var.ingress_port
+      protocol        = "tcp"
       security_groups = [ingress.value]
     }
   }
@@ -186,7 +186,7 @@ resource "aws_launch_template" "launch_template" {
   key_name               = var.ssh_key_name
   user_data              = base64encode(data.template_file.eks_user_data.rendered)
   update_default_version = true
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
@@ -212,9 +212,10 @@ data "aws_subnet" "ssh_target" {
 }
 
 resource "aws_security_group" "remote_ssh" {
+  name        = "eks-remote-ssh-sg-${var.node_group_name}-${var.cluster_name}"
   description = "Defines SG from which SSH to nodes is allowed"
   vpc_id      = var.vpc_id
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
 
   egress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -229,8 +230,6 @@ resource "aws_security_group" "remote_ssh" {
     to_port     = 22
     protocol    = "TCP"
   }
-
-  name = "eks-remote-ssh-sg-${var.cluster_name}"
 }
 
 resource "aws_eks_node_group" "nodegroup" {
@@ -254,7 +253,7 @@ resource "aws_eks_node_group" "nodegroup" {
   # "deploy me on an ingressable node". Not well named, I know...
   labels = merge(
     var.ingressed ? {
-      env = "default"
+      env = var.node_env_label
     } : {}
   )
 

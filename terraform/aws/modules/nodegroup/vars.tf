@@ -134,3 +134,8 @@ variable "eks_node_group_role_arn" {
   type        = string
   default     = ""
 }
+
+variable "node_env_label" {
+  type    = string
+  default = "default"
+}

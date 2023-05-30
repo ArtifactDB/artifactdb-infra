@@ -9,7 +9,7 @@ resource "aws_iam_role" "eks_cluster_role" {
   max_session_duration = 3600
   name                 = "eks-cluster-role-${var.cluster_name}"
   path                 = "/"
-  lifecycle {ignore_changes = [permissions_boundary]}
+  lifecycle { ignore_changes = [permissions_boundary] }
 }
 
 
@@ -25,7 +25,7 @@ resource "aws_security_group" "extra_sg" {
 
   name   = "eks-cluster-sg-${var.cluster_name}-extra"
   vpc_id = var.vpc_id
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "aws_eks_cluster" "eks_cluster" {
@@ -182,8 +182,8 @@ module "aws_ssm_secrets" {
 
   kms_key_arn = var.kms_arn
   tags = {
-    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
-    env           = var.environment
+    gprn = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env  = var.environment
   }
 }
 #### Enabling IAM Roles for Service Accounts  for aws-node pod

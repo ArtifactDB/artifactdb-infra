@@ -29,5 +29,5 @@ variable "environment" {
 
 variable "kms_arn" {
   description = "The ARN of the existing KMS key"
-  default     = ""  # Set a default value to avoid "value is null" error.
+  default     = "" # Set a default value to avoid "value is null" error.
 }

@@ -12,7 +12,7 @@ resource "aws_db_subnet_group" "subnet_grp" {
 }
 
 resource "aws_security_group" "sg_db" {
-  lifecycle {ignore_changes = [tags]}
+  lifecycle { ignore_changes = [tags] }
   egress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = "0"
@@ -48,7 +48,7 @@ module "aws_ssm_secrets" {
 
   secrets = {
     "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
-      "address" = aws_db_instance.psql.address,
+      "address"  = aws_db_instance.psql.address,
       "username" = aws_db_instance.psql.username,
       "password" = aws_db_instance.psql.password,
       "endpoint" = aws_db_instance.psql.endpoint

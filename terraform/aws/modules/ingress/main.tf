@@ -27,7 +27,7 @@ provider "helm" {
 
 resource "helm_release" "traefik" {
   count            = var.ingress_controller == "traefik" ? 1 : 0
-  namespace        = "ingress"  # TODO: as a variable
+  namespace        = "ingress" # TODO: as a variable
   create_namespace = true
 
   name       = "traefik"
@@ -56,17 +56,17 @@ resource "helm_release" "traefik" {
   }
 
   set {
-    name = "additionalArguments[0]"
+    name  = "additionalArguments[0]"
     value = "--providers.kubernetesingress.labelselector=ci!=true"
   }
 
   set {
-    name = "additionalArguments[1]"
+    name  = "additionalArguments[1]"
     value = "--providers.kubernetescrd.labelselector=ci!=true"
   }
 
   set {
-    name = "additionalArguments[2]"
+    name  = "additionalArguments[2]"
     value = "--providers.kubernetescrd.allowcrossnamespace=true"
   }
 
