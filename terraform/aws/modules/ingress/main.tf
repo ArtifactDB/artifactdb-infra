@@ -61,6 +61,11 @@ resource "helm_release" "traefik" {
   }
 
   set {
+    name = "globalArguments"
+    value = "[]"
+  }
+
+  set {
     name  = "additionalArguments[0]"
     value = "--providers.kubernetesingress.labelselector=ci!=true"
   }
@@ -73,16 +78,6 @@ resource "helm_release" "traefik" {
   set {
     name  = "additionalArguments[2]"
     value = "--providers.kubernetescrd.allowcrossnamespace=true"
-  }
-
-  set {
-    name = "additionalArguments[3]"
-    value = "--global.checknewversion=false"
-  }
-
-  set {
-    name = "additionalArguments[4]"
-    value = "--global.sendanonymoususage=false"
   }
 
 }
