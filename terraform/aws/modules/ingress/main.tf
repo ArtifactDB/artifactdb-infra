@@ -46,6 +46,11 @@ resource "helm_release" "traefik" {
   }
 
   set {
+    name  = "image.repository"
+    value = var.docker_repo
+  }
+
+  set {
     name  = "deployment.replicas"
     value = var.num_replicas
   }
@@ -68,6 +73,16 @@ resource "helm_release" "traefik" {
   set {
     name  = "additionalArguments[2]"
     value = "--providers.kubernetescrd.allowcrossnamespace=true"
+  }
+
+  set {
+    name = "additionalArguments[3]"
+    value = "--global.checknewversion=false"
+  }
+
+  set {
+    name = "additionalArguments[4]"
+    value = "--global.sendanonymoususage=false"
   }
 
 }

@@ -22,3 +22,9 @@ variable "cluster_name" {
   description = "EKS cluster name"
   type        = string
 }
+
+variable "docker_repo" {
+  description = "Alternate Docker repo to pull the image from"
+  type = string
+  default = "traefik"  # Docker Hub
+}
