@@ -178,7 +178,7 @@ resource "helm_release" "logstash" {
       opensearch {
         hosts => ["https://${var.opensearch_endpoint}:443"]
         ssl_certificate_verification => true
-        index => "${var.lb_logs_bucket}_%%{+YYYY.MM}"
+        index => "${var.logstash_output_index_name}_%%{+YYYY.MM}"
       }
     }
       EOT

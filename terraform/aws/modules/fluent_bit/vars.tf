@@ -11,11 +11,6 @@ variable "oidc_provider_url" {
   type = string
 }
 
-variable "lb_logs_bucket" {
-  description = "Bucket name to store ALB logs"
-  type        = string
-}
-
 variable "aws_region" {
   description = "ie. us-west-2"
   type        = string
@@ -25,29 +20,17 @@ variable "aws_account_id" {
   type = string
 }
 
-variable "opensearch_endpoint" {
-  description = "OpenSearch endpoint."
-  type        = string
-}
-
 variable "aws_profile" {
   description = "AWS profile name"
   type        = string
 }
 
-variable "ecr_repository_name" {
-  type = string
-}
-
 variable "helm_deployment_name" {
   type = string
+  default = "fluent-bit"
 }
 
 variable "helm_deployment_namespace" {
-  type = string
-}
-
-variable "logstash_environment" {
   type = string
 }
 
@@ -56,6 +39,8 @@ variable "environment" {
   type        = string
 }
 
-variable "logstash_output_index_name" {
+variable "docker_repo" {
+  description = "Alternate Docker repo to pull the image from"
   type = string
+  default = "aws-for-fluent-bit"  # Docker Hub
 }

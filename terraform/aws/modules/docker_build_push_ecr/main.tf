@@ -1,5 +1,6 @@
 resource "aws_ecr_repository" "repository" {
   name = var.image_name # replace with your repository name
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "null_resource" "docker_build_and_push" {
