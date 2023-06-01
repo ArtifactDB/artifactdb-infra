@@ -23,8 +23,15 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "docker_repo" {
-  description = "Alternate Docker repo to pull the image from"
+variable "aws_region" {
+  description = "ie. us-west-2"
+  type        = string
+}
+
+variable "aws_account_id" {
   type = string
-  default = "traefik"  # Docker Hub
+}
+
+variable "ecr_repository_name" {
+  type = string
 }

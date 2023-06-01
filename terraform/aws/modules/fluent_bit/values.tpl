@@ -1,13 +1,8 @@
 image:
   repository: ${docker_repo}
-  tag: 2.28.4
+  tag: ${image_tag}
   pullPolicy: IfNotPresent
 
-cloudWatch:
-  region: ${region}
-  logGroupName: ${log_group_name}
-  logGroupTemplate: ${log_group_template}
-  logRetentionDays: 7
 
 cloudWatchLogs:
   region: ${region}

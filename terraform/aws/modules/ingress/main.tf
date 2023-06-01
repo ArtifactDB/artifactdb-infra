@@ -24,6 +24,21 @@ provider "helm" {
   }
 }
 
+locals {
+  image_name_to_pull = "traefik"
+  image_tag_to_pull = "v2.9.8"
+  image_name_to_push = "${var.ecr_repository_name}/traefik"
+  image_tag_to_push = "v2.9.8"
+}
+module "docker_pull_push_ecr" {
+  source = "../docker_pull_push_ecr"
+  image_name_to_pull = local.image_name_to_pull
+  image_tag_to_pull = local.image_tag_to_pull
+  image_name_to_push = local.image_name_to_push
+  image_tag_to_push = local.image_tag_to_push
+  aws_account_id = var.aws_account_id
+  aws_region = var.aws_region
+}
 
 resource "helm_release" "traefik" {
   count            = var.ingress_controller == "traefik" ? 1 : 0
@@ -47,7 +62,11 @@ resource "helm_release" "traefik" {
 
   set {
     name  = "image.repository"
-    value = var.docker_repo
+    value = module.docker_pull_push_ecr.ecr_image_name
+  }
+  set {
+    name  = "image.tag"
+    value = local.image_tag_to_push
   }
 
   set {

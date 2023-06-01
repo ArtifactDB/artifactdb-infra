@@ -249,12 +249,10 @@ resource "aws_eks_node_group" "nodegroup" {
     version = "$Latest"
   }
 
-  # pods declare tolerations when ingressed is needed, env=default means
-  # "deploy me on an ingressable node". Not well named, I know...
   labels = merge(
-    var.ingressed ? {
+    {
       env = var.node_env_label
-    } : {}
+    }
   )
 
   scaling_config {
