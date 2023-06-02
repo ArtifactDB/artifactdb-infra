@@ -26,7 +26,7 @@ variable "aws_profile" {
 }
 
 variable "helm_deployment_name" {
-  type = string
+  type    = string
   default = "fluent-bit"
 }
 
@@ -41,6 +41,6 @@ variable "environment" {
 
 variable "docker_repo" {
   description = "Alternate Docker repo to pull the image from"
-  type = string
-  default = "aws-for-fluent-bit"  # Docker Hub
+  type        = string
+  default     = "aws-for-fluent-bit" # Docker Hub
 }

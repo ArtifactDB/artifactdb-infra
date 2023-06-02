@@ -81,18 +81,18 @@ resource "kubernetes_namespace" "fluent_bit" {
 
 locals {
   image_name_to_pull = "public.ecr.aws/aws-observability/aws-for-fluent-bit"
-  image_tag_to_pull = "2.28.4"
+  image_tag_to_pull  = "2.28.4"
   image_name_to_push = "gp/${var.environment}/fluent-bit"
-  image_tag_to_push = "2.28.4"
+  image_tag_to_push  = "2.28.4"
 }
 module "docker_pull_push_ecr" {
-  source = "../docker_pull_push_ecr"
+  source             = "../docker_pull_push_ecr"
   image_name_to_pull = local.image_name_to_pull
-  image_tag_to_pull = local.image_tag_to_pull
+  image_tag_to_pull  = local.image_tag_to_pull
   image_name_to_push = local.image_name_to_push
-  image_tag_to_push = local.image_tag_to_push
-  aws_account_id = var.aws_account_id
-  aws_region = var.aws_region
+  image_tag_to_push  = local.image_tag_to_push
+  aws_account_id     = var.aws_account_id
+  aws_region         = var.aws_region
 }
 
 resource "helm_release" "fluent_bit" {
@@ -101,16 +101,16 @@ resource "helm_release" "fluent_bit" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-for-fluent-bit"
   #version    = "4.0.6"
-  namespace  = kubernetes_namespace.fluent_bit.metadata[0].name
+  namespace = kubernetes_namespace.fluent_bit.metadata[0].name
 
   values = [
     templatefile("./values.tpl", {
-      log_group_name = "/aws/eks/${var.cluster_name}/cluster/fluentbit-cloudwatch/logs"
-      log_group_template = "/aws/containerinsights/${var.cluster_name}/$kubernetes['namespace_name']"
-      region       = var.aws_region
-      service_account_name = var.helm_deployment_name
-      docker_repo = module.docker_pull_push_ecr.ecr_image_name
-      image_tag = local.image_tag_to_push
+      log_group_name           = "/aws/eks/${var.cluster_name}/cluster/fluentbit-cloudwatch/logs"
+      log_group_template       = "/aws/containerinsights/${var.cluster_name}/$kubernetes['namespace_name']"
+      region                   = var.aws_region
+      service_account_name     = var.helm_deployment_name
+      docker_repo              = module.docker_pull_push_ecr.ecr_image_name
+      image_tag                = local.image_tag_to_push
       service_account_role_arn = aws_iam_role.fluent_bit.arn
     })
   ]

@@ -1,7 +1,3 @@
-data "aws_ssm_parameters_by_path" "secrets" {
-  path = var.parameter_path
-}
-
 data "aws_ssm_parameters_by_path" "parameters" {
   path = var.parameter_path
 }
@@ -12,9 +8,11 @@ locals {
     outputs = {
       for idx, name in data.aws_ssm_parameters_by_path.parameters.names :
       element(split("/", name), length(split("/", name)) - 1) => jsondecode(data.aws_ssm_parameters_by_path.parameters.values[idx])
+      if !endswith(element(split("/", name), length(split("/", name)) - 1), "bastion")
     }
   })
 }
+
 
 resource "null_resource" "store" {
   triggers = { always = timestamp() }

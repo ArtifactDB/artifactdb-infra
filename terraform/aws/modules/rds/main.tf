@@ -57,10 +57,8 @@ module "aws_ssm_secrets" {
 
   kms_key_arn = var.kms_arn
   tags = {
-    gprn          = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
-    env           = var.environment
-    platform_id   = var.platform_id
-    platform_name = var.platform_name
+    gprn = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env  = var.environment
   }
 }
 

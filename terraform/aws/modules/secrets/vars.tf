@@ -31,11 +31,11 @@ variable "ecr_repository_name" {
 }
 
 variable "helm_deployment_name" {
-  type = string
+  type    = string
   default = "sealed-secrets"
 }
 
 variable "helm_deployment_namespace" {
-  type = string
+  type    = string
   default = "kube-system"
 }

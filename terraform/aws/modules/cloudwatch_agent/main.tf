@@ -21,7 +21,7 @@ provider "helm" {
 }
 
 resource "aws_iam_role" "cloudwatch_agent" {
-  name               = "cloudwatch-agent-${var.cluster_name}"
+  name = "cloudwatch-agent-${var.cluster_name}"
   lifecycle { ignore_changes = [permissions_boundary] }
   assume_role_policy = <<EOF
 {
@@ -50,15 +50,15 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
 }
 
 resource "helm_release" "cloudwatch_agent" {
-  name      = var.helm_deployment_name
-  namespace = var.helm_deployment_namespace
-  chart     = "aws-cloudwatch-metrics"
+  name       = var.helm_deployment_name
+  namespace  = var.helm_deployment_namespace
+  chart      = "aws-cloudwatch-metrics"
   repository = "https://aws.github.io/eks-charts"
   values = [
     yamlencode({
-      awsRegion  = var.aws_region
+      awsRegion   = var.aws_region
       clusterName = var.cluster_name
-      rbac       = {
+      rbac = {
         create = true
       }
       serviceAccount = {

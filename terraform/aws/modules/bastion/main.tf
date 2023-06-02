@@ -50,3 +50,23 @@ data "aws_ami" "latest_amazon_linux" {
     values = ["AMI-RCP-CENTRALIZED-PB-UBUNTU-20.04-*"]
   }
 }
+
+locals {
+  module = basename(abspath(path.module))
+}
+
+module "aws_ssm_secrets" {
+  source = "../ssm_secrets"
+
+  secrets = {
+    "/gprn/${var.environment}/platform/${var.platform_id}/secret/${local.module}" = jsonencode({
+      "private_key" = local_sensitive_file.bastion_private_key.content
+    })
+  }
+
+  kms_key_arn = var.kms_arn
+  tags = {
+    gprn = "gprn:${var.environment}:platform:${var.platform_id}:secret:${local.module}"
+    env  = var.environment
+  }
+}

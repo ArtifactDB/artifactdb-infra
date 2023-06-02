@@ -1,25 +1,25 @@
 variable "pg_host" {
-  type = string
+  type        = string
   description = "PostgreSQL instance hostname"
 }
 
 variable "pg_port" {
-  type = number
+  type    = number
   default = 5432
 }
 
 variable "pg_auth_database" {
-  type = string
+  type        = string
   description = "Database name used to authenticate master user"
 }
 
 variable "pg_username" {
-  type = string
+  type        = string
   description = "Master username, allowed to create databases, roles, etc..."
 }
 
 variable "pg_database" {
-  type = string
+  type        = string
   description = "Database name dedicated for the instance schemas, tables, etc..."
 }
 
@@ -32,6 +32,6 @@ variable "pg_owner" {
 }
 
 variable "pg_passwd" {
-  type = string
+  type      = string
   sensitive = true
 }

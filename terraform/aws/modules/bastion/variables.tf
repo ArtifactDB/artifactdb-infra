@@ -19,3 +19,22 @@ variable "ssh_key_name" {
 variable "private_key" {
   type = string
 }
+
+variable "platform_name" {
+  description = "ie. DemoDB"
+  type        = string
+}
+
+variable "environment" {
+  description = "ie. sandbox"
+  type        = string
+}
+
+variable "platform_id" {
+  description = "ie. demodb"
+  type        = string
+}
+
+variable "kms_arn" {
+  type = string
+}

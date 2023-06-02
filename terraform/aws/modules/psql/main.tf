@@ -1,13 +1,13 @@
 
 provider "postgresql" {
   scheme   = "awspostgres"
-  host = var.pg_host
+  host     = var.pg_host
   username = var.pg_username
   database = var.pg_auth_database
   port     = var.pg_port
   #password = "..."  # set via $PGPASSWORD
   superuser = false
-  sslmode = "disable"
+  sslmode   = "disable"
 }
 
 resource "postgresql_role" "role" {
@@ -29,7 +29,7 @@ resource "postgresql_grant" "grant" {
   database    = var.pg_database
   role        = var.pg_role
   object_type = "database"
-  privileges  = ["CONNECT","CREATE","TEMPORARY"]
+  privileges  = ["CONNECT", "CREATE", "TEMPORARY"]
   depends_on = [
     postgresql_database.sequences
   ]
@@ -40,7 +40,7 @@ resource "postgresql_grant" "grant_master" {
   database    = var.pg_database
   role        = var.pg_role
   object_type = "database"
-  privileges  = ["CONNECT","CREATE","TEMPORARY"]
+  privileges  = ["CONNECT", "CREATE", "TEMPORARY"]
   depends_on = [
     postgresql_database.sequences
   ]

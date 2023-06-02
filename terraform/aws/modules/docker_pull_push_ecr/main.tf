@@ -8,7 +8,7 @@ locals {
 }
 
 resource "null_resource" "pull_and_push_docker_image" {
-  triggers = {image_name = local.ecr_image_name }
+  triggers = { image_name = local.ecr_image_name }
   provisioner "local-exec" {
     command = <<-EOF
       $(aws ecr get-login --no-include-email --region ${var.aws_region})
