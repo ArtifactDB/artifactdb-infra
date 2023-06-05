@@ -49,6 +49,29 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+resource "aws_iam_policy" "cloudwatch_agent_retention" {
+  name        = "cloudwatch-agent-${var.cluster_name}-retention"
+  description = "Policy for Fluent Bit to interact with CloudWatch logs"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:PutRetentionPolicy"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "fluent_bit_cloudwatch" {
+  role       = aws_iam_role.cloudwatch_agent.name
+  policy_arn = aws_iam_policy.cloudwatch_agent_retention.arn
+}
+
 resource "helm_release" "cloudwatch_agent" {
   name       = var.helm_deployment_name
   namespace  = var.helm_deployment_namespace

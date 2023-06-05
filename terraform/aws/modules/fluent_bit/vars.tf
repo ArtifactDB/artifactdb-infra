@@ -44,3 +44,9 @@ variable "docker_repo" {
   type        = string
   default     = "aws-for-fluent-bit" # Docker Hub
 }
+
+variable "log_retention_days" {
+  description = "ie. 30"
+  type        = string
+  default     = 30
+}

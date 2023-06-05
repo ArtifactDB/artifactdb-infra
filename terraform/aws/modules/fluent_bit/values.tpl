@@ -8,12 +8,12 @@ cloudWatchLogs:
   region: ${region}
   logGroupName: ${log_group_name}
   logGroupTemplate: ${log_group_template}
-  logRetentionDays: 7
+  logRetentionDays: ${log_retention_days}
 
 serviceAccount:
   create: true
   name: ${service_account_name}
-  annotations: {eks.amazonaws.com/role-arn = ${service_account_role_arn}}
+  annotations: {'eks.amazonaws.com/role-arn': '${service_account_role_arn}'}
 
 
 service:

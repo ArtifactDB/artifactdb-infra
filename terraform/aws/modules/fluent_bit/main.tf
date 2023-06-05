@@ -59,6 +59,7 @@ resource "aws_iam_policy" "fluent_bit_cloudwatch" {
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
+          "logs:PutRetentionPolicy",
           "logs:DescribeLogStreams"
         ],
         Effect   = "Allow",
@@ -107,6 +108,7 @@ resource "helm_release" "fluent_bit" {
     templatefile("./values.tpl", {
       log_group_name           = "/aws/eks/${var.cluster_name}/cluster/fluentbit-cloudwatch/logs"
       log_group_template       = "/aws/containerinsights/${var.cluster_name}/$kubernetes['namespace_name']"
+      log_retention_days       = var.log_retention_days
       region                   = var.aws_region
       service_account_name     = var.helm_deployment_name
       docker_repo              = module.docker_pull_push_ecr.ecr_image_name
