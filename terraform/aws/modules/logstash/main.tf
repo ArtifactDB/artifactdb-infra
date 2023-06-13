@@ -150,7 +150,7 @@ resource "helm_release" "logstash" {
         match => [ "message", '%%{TIMESTAMP_ISO8601:timestamp} %%{NOTSPACE:loadbalancer} %%{IP:client_ip}:%%{NUMBER:client_port:int} (?:%%{IP:backend_ip}:%%{NUMBER:backend_port:int}|-) %%{NUMBER:request_processing_time:float} %%{NUMBER:backend_processing_time:float} %%{NUMBER:response_processing_time:float} (?:%%{NUMBER:elb_status_code:int}|-) (?:%%{NUMBER:backend_status_code:int}|-) %%{NUMBER:received_bytes:int} %%{NUMBER:sent_bytes:int} "(?:%%{WORD:verb}|-) (?:%%{GREEDYDATA:request}|-) (?:HTTP/%%{NUMBER:httpversion}|-( )?)" "%%{DATA:userAgent}"( %%{NOTSPACE:ssl_cipher} %%{NOTSPACE:ssl_protocol})?']
       }
       grok {
-        match => [ "request", '%%{URIPROTO:uri_proto}://(?:%%{USER:user}(?::[^@]*)?@)?(?:%%{URIHOST:uri_domain})?(%%{URIPATH:uri_path})?(?:%%{URIPARAM:uri_param})?' ]
+        match => [ "request", '%%{URIPROTO:uri_proto}://(?:%%{USER:user}(?::[^@]*)?^)?(?:%%{URIHOST:uri_domain})?(%%{URIPATH:uri_path})?(?:%%{URIPARAM:uri_param})?' ]
       }
       date {
         match => [ "timestamp", ISO8601 ]
