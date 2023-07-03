@@ -77,6 +77,7 @@ resource "null_resource" "eni_config_label_def" {
             # this has auto-switched to new cluster context
             echo "************************************************************************************"
             kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone
+            kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
             echo "************************************************************************************"
 EOT
   }
