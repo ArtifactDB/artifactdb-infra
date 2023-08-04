@@ -12,11 +12,6 @@ variable "ssh_key_name" {
   type        = string
 }
 
-variable "ingress_cidr_blocks" {
-  description = "List CIDR blocks from which traffic can flow within the ingress controller. Usually matching what the ALB is targetting"
-  type        = list(string)
-}
-
 variable "ingress_port" {
   type    = number
   default = 30080
@@ -134,4 +129,10 @@ variable "eks_node_group_role_arn" {
 variable "node_env_label" {
   type    = string
   default = "default"
+}
+
+variable "additional_ingress_cidr" {
+  description = "Additional CIDR blocks for ingress rules."
+  type        = list(string)
+  default     = []
 }

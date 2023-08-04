@@ -26,7 +26,7 @@ variable "aws_profile" {
 }
 
 variable "helm_deployment_name" {
-  type    = string
+  type = string
 }
 
 variable "helm_deployment_namespace" {
@@ -62,9 +62,9 @@ variable "sealed_secrets_path" {
 }
 
 variable "ingress_regex_match" {
-  type        = string
+  type = string
 }
 
 variable "helm_deployment_repo" {
-  type        = string
+  type = string
 }

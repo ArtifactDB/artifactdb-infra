@@ -69,8 +69,8 @@ EOF
 }
 
 resource "kubectl_manifest" "middleware" {
-    depends_on = [null_resource.apply_secrets]
-    yaml_body = <<YAML
+  depends_on = [null_resource.apply_secrets]
+  yaml_body  = <<YAML
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -83,8 +83,8 @@ YAML
 }
 
 resource "kubectl_manifest" "ingress" {
-    depends_on = [null_resource.apply_secrets, kubectl_manifest.middleware]
-    yaml_body = <<YAML
+  depends_on = [null_resource.apply_secrets, kubectl_manifest.middleware]
+  yaml_body  = <<YAML
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:

@@ -51,7 +51,7 @@ variable "environment" {
 
 variable "applications" {
   description = "List of applications to monitor."
-  type        = list(object({
+  type = list(object({
     hostname = string
     path     = string
   }))

@@ -35,11 +35,6 @@ variable "multi_az" {
   type        = bool
 }
 
-variable "ingress_cidr_blocks" {
-  description = "CIDR blocks allowed to access the DB instance"
-  type        = list(string)
-}
-
 variable "platform_name" {
   description = "ie. DemoDB"
   type        = string
@@ -57,4 +52,10 @@ variable "platform_id" {
 
 variable "kms_arn" {
   type = string
+}
+
+variable "additional_ingress_cidr" {
+  description = "Additional CIDR blocks for ingress rules."
+  type        = list(string)
+  default     = []
 }

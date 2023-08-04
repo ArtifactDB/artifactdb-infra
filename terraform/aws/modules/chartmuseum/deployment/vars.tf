@@ -26,7 +26,7 @@ variable "aws_profile" {
 }
 
 variable "helm_deployment_name" {
-  type    = string
+  type = string
 }
 
 variable "helm_deployment_namespace" {
@@ -53,7 +53,7 @@ variable "storage_amazon_prefix" {
 }
 
 variable "storage_amazon_bucket" {
-  type        = string
+  type = string
 }
 
 variable "sealed_secrets_path" {
@@ -61,5 +61,5 @@ variable "sealed_secrets_path" {
 }
 
 variable "ingress_regex_match" {
-  type        = string
+  type = string
 }

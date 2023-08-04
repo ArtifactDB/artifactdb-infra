@@ -29,7 +29,7 @@ resource "helm_release" "stakater" {
 
   values = [
     templatefile("./values.tpl", {
-      resource_label_selector="reloader=enabled"
+      resource_label_selector = "reloader=enabled"
     })
   ]
 

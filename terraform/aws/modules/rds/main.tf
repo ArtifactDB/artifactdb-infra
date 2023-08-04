@@ -5,6 +5,11 @@ data "aws_vpc" "default" {
   id = var.vpc_id
 }
 
+data "aws_subnet" "deploy_subnets" {
+  for_each = "${toset(var.subnet_ids)}"
+  id       = "${each.value}"
+}
+
 resource "aws_db_subnet_group" "subnet_grp" {
   description = "RDS DB subnet group"
   name        = "subgrp-${var.db_name}"
@@ -22,7 +27,7 @@ resource "aws_security_group" "sg_db" {
   }
 
   ingress {
-    cidr_blocks = var.ingress_cidr_blocks
+    cidr_blocks = concat(values(data.aws_subnet.deploy_subnets).*.cidr_block, var.additional_ingress_cidr)
     from_port   = var.db_port
     protocol    = "tcp"
     self        = "false"

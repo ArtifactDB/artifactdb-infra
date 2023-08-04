@@ -1,3 +1,8 @@
+data "aws_subnet" "deploy_subnets" {
+  for_each = "${toset(var.subnet_ids)}"
+  id       = "${each.value}"
+}
+
 resource "aws_security_group" "ingress" {
   description = "Allows access to the load balancer"
   name        = "eks-alb-sg-${var.lb_name}"
@@ -17,7 +22,7 @@ resource "aws_security_group_rule" "https" {
   count             = var.ssl_cert_arn != null ? 1 : 0
   security_group_id = aws_security_group.ingress.id
   type              = "ingress"
-  cidr_blocks       = var.ingress_cidr_blocks
+  cidr_blocks       = concat(values(data.aws_subnet.deploy_subnets).*.cidr_block, var.additional_ingress_cidr)
   from_port         = 443
   to_port           = 443
   protocol          = "TCP"
@@ -26,7 +31,7 @@ resource "aws_security_group_rule" "https" {
 resource "aws_security_group_rule" "http" {
   security_group_id = aws_security_group.ingress.id
   type              = "ingress"
-  cidr_blocks       = var.ingress_cidr_blocks
+  cidr_blocks       = concat(values(data.aws_subnet.deploy_subnets).*.cidr_block, var.additional_ingress_cidr)
   from_port         = 80
   to_port           = 80
   protocol          = "TCP"

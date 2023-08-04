@@ -2,6 +2,11 @@ locals {
   create_iam_role = var.eks_node_group_role_arn == "" ? 1 : 0
 }
 
+data "aws_subnet" "deploy_subnets" {
+  for_each = "${toset(var.subnet_ids)}"
+  id       = "${each.value}"
+}
+
 resource "aws_iam_role" "node_role" {
   count = local.create_iam_role
   name  = "eks-node-group-${var.node_group_name}-${var.cluster_name}"
@@ -150,7 +155,7 @@ resource "aws_security_group" "ingress" {
   }
 
   ingress {
-    cidr_blocks = var.ingress_cidr_blocks
+    cidr_blocks = concat(values(data.aws_subnet.deploy_subnets).*.cidr_block, var.additional_ingress_cidr)
     from_port   = var.ingress_port
     to_port     = var.ingress_port
     protocol    = "tcp"
@@ -225,7 +230,7 @@ resource "aws_security_group" "remote_ssh" {
   }
 
   ingress {
-    cidr_blocks = values(data.aws_subnet.ssh_target).*.cidr_block
+    cidr_blocks = concat(values(data.aws_subnet.deploy_subnets).*.cidr_block, var.additional_ingress_cidr)
     from_port   = 22
     to_port     = 22
     protocol    = "TCP"
@@ -286,7 +291,7 @@ resource "aws_eks_node_group" "nodegroup" {
 #  from_port   = var.ingress_port
 #  to_port     = var.ingress_port
 #  protocol    = "tcp"
-#  cidr_blocks = var.ingress_cidr_blocks
+#  cidr_blocks = concat(values(data.aws_subnet.deploy_subnets).*.cidr_block, var.additional_ingress_cidr)
 #  security_group_id = aws_eks_node_group.nodegroup.resources[0].remote_access_security_group_id
 #}
 

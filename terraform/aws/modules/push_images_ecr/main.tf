@@ -30,7 +30,7 @@ locals {
 
 module "docker_pull_push_ecr" {
   for_each           = { for image in local.images : image.image_name_to_pull => image }
-  source             = "../docker_pull_push_ecr"
+  source             = "./modules/docker_pull_push_ecr"
   image_name_to_pull = each.value.image_name_to_pull
   image_tag_to_pull  = each.value.image_tag_to_pull
   image_name_to_push = each.value.image_name_to_push
@@ -41,7 +41,7 @@ module "docker_pull_push_ecr" {
 
 module "docker_build_and_push" {
   for_each        = { for image_to_build in local.images_to_build : image_to_build.image_name => image_to_build }
-  source          = "../docker_build_push_ecr"
+  source          = "./modules/docker_build_push_ecr"
   aws_region      = var.aws_region
   aws_account_id  = var.aws_account_id
   aws_profile     = var.aws_profile

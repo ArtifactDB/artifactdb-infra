@@ -22,10 +22,10 @@ variable "internal" {
   default     = true
 }
 
-variable "ingress_cidr_blocks" {
-  description = "List CIDR blocks from which traffic to ALB is allowed"
+variable "additional_ingress_cidr" {
+  description = "Additional CIDR blocks for ingress rules."
   type        = list(string)
-  default     = null
+  default     = []
 }
 
 variable "ingress_port" {

@@ -1,11 +1,11 @@
 resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.canary_name}-synthetics-canary-results"
+  bucket        = "${var.canary_name}-synthetics-canary-results"
   force_destroy = true
 }
 
 data "archive_file" "zip" {
   type        = "zip"
-  source_dir = var.canary_script
+  source_dir  = var.canary_script
   output_path = "./${var.canary_name}.zip"
 }
 
@@ -29,13 +29,13 @@ resource "aws_synthetics_canary" "canary" {
     timeout_in_seconds = 30
     environment_variables = {
       "NODE_TLS_REJECT_UNAUTHORIZED" = "0",
-      "APPLICATIONS" = jsonencode(var.applications)
+      "APPLICATIONS"                 = jsonencode(var.applications)
     }
   }
 }
 
 resource "aws_iam_role" "canary_execution_role" {
-  lifecycle {ignore_changes = [permissions_boundary]}
+  lifecycle { ignore_changes = [permissions_boundary] }
   name = "${var.canary_name}_execution_role"
 
   assume_role_policy = <<EOF

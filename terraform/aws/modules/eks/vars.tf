@@ -51,5 +51,5 @@ variable "platform_id" {
 
 variable "additional_iam_roles_to_access_k8s" {
   description = "ie. {'arn:aws:iam::123456789012:role/role_name' = {username = 'dev-user' group = 'system:master'}}"
-  type        = map
+  type        = map(any)
 }

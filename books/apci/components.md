@@ -112,6 +112,56 @@ Following the same principle explained above, the whole table content can be res
 project IDs and their respective versions. It is also a secondary storage.  be fully restored from the metadata files
 found on S3. It is strictly a secondary storage.
 
+## Optional components
+
+### FluentBit and Cloudwatch agent
+
+Both these components can be used to populate Cloudwatch log groups to give visibility and traceability on the whole
+platform. Cloudwatch agents log information about the cluster itself (nodes, etc...) while FluentBit works at the pods
+level, logging their stdout/stderr.
+
+### Logstash
+
+[Logstash](https://www.elastic.co/logstash) is one major component of the ELK stack (Elasticsearch, Logstash, Kibana)
+used to ingest logs and make them search in [Kibana](https://www.elastic.co/kibana). By default when setting up an ALB
+in the platform, logs are stored in a S3 bucket. Deploying the Logstash component allows to ingest these logs from S3
+and index them in the Elasticsearch/Opensearch cluster.
+
+### Cerebro
+
+[Cerebro](https://github.com/lmenezes/cerebro) is a UI on top of Elasticsearch, conveniently providing an adminitrative
+overview of a cluster, operations to manipulate global and index settings, visualize index mappings, and query indexed
+data. The access must be restricted to admins only, protected by user/passwords.
+
+### Chartmuseum
+
+[Chartmuseum](https://chartmuseum.com/) is a Helm Charts repository servers. If ArtifactDB instances are to be deployed
+from charts stored as tarballs accessible from such a server, a instance of Chartmuseum can be deployed within the
+platform for that purpose.
+
+### Stakater Reloader
+
+[Stakater Reloader](https://github.com/stakater/Reloader) is a convenient Kubernetes operator used to detect changes on
+ConfigMaps and Secrets objects and automatically restart Deployments and StatefulSets. ArtifactDB deployment code (Helm
+Chart) can use this reloader to automatically maintain latest *active* configuration or secrets (eg. rotation). Without
+such a reloader, changes may be not become active and a manual restart would be necessary.
+
+### Synthetic Canaries
+
+To perform basic monitoring and make sure ArtifactDB instances are reachable from outside of the cloud VPC, [Synthetic
+Canaries](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Canaries.html) can be
+deployed, along with a list of URLs to check on a periodic schedule. Checks are very simple, but depending on what is
+being tested behind the URLs, lots of connectivity can be verified and issues spotted when things go wrong.
+Traditionally, the endpoint `GET /status` is used in ArtifactDB instances, checking Elasticsearch and Celery backend
+connectivity.
+
+### Bastion and SSH keys
+
+In some restricted environment, some resources like the EKS nodes and databases, can only be accessed from within a VPC
+and from some specific subnets. This is to protect access from outside. Yet the administration of the platform can still
+require access to these resources. In such scenario and "Bastion" instance can be created with dedicated SSH keys,
+deployed on "connectivity" subnets allowing access from outside, providing a "hop" into the VPC.
+
 ## Post-deployment
 
 Once the ArtifactDB Platform is deployed, Terraform outputs are captured and stored in a ConfigMap object in Kubernetes.
