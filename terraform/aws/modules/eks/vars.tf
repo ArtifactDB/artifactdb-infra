@@ -48,3 +48,8 @@ variable "platform_id" {
   description = "ie. demodb"
   type        = string
 }
+
+variable "additional_iam_roles_to_access_k8s" {
+  description = "ie. {'arn:aws:iam::123456789012:role/some-dev-user-role' = {username = 'dev-user' group = 'system:master'}}"
+  type        = map
+}

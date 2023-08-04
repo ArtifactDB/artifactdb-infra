@@ -1,3 +1,17 @@
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.eks_cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks_cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster_auth.token
+}
+
+data "aws_eks_cluster" "eks_cluster" {
+  name = var.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster_auth" {
+  name = var.cluster_name
+}
+
 # IAM role the EKS cluster can assume
 resource "aws_iam_role" "eks_cluster_role" {
   assume_role_policy = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"eks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
@@ -165,6 +179,26 @@ resource "aws_security_group_rule" "k8s_access" {
   protocol          = "tcp"
   cidr_blocks       = values(data.aws_subnet.deploy_subnets).*.cidr_block
   security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+}
+
+locals {
+  mapRoles = join("\n", [
+    for arn, values in var.additional_iam_roles_to_access_k8s : <<-EOT
+    - rolearn: ${arn}
+      username: ${values.username}
+      groups:
+        - ${values.group}
+    EOT
+  ])
+}
+
+resource "null_resource" "patch_aws_auth" {
+  provisioner "local-exec" {
+    command = "./update_aws_auth_configmap.sh ${aws_eks_cluster.eks_cluster.name} ${var.aws_profile} ${var.aws_region} \"${local.mapRoles}\""
+  }
+  triggers = {
+    mapRoles = local.mapRoles
+  }
 }
 
 # Send secrets to SSM Parameter Store
