@@ -4,11 +4,6 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.cluster_auth.token
 }
 
-locals {
-  image_name = "logstash"
-  image_tag  = "opensearch"
-}
-
 data "aws_eks_cluster" "eks_cluster" {
   name = var.cluster_name
 }
@@ -97,16 +92,6 @@ resource "aws_iam_role" "logstash_role" {
 EOF
 }
 
-module "docker_build_and_push" {
-  source          = "../docker_build_push_ecr"
-  aws_region      = var.aws_region
-  aws_account_id  = var.aws_account_id
-  aws_profile     = var.aws_profile
-  image_name      = "${var.ecr_repository_name}/${local.image_name}"
-  image_tag       = local.image_tag
-  dockerfile_path = "./"
-}
-
 resource "aws_iam_role_policy_attachment" "logstash_es_access" {
   role       = aws_iam_role.logstash_role.name
   policy_arn = aws_iam_policy.elasticsearch_logstash.arn
@@ -124,15 +109,15 @@ resource "kubernetes_namespace" "logstash" {
 }
 
 resource "helm_release" "logstash" {
-  depends_on = [module.docker_build_and_push, kubernetes_namespace.logstash]
+  depends_on = [kubernetes_namespace.logstash]
   name       = var.helm_deployment_name
   namespace  = var.helm_deployment_namespace
   repository = "https://helm.elastic.co"
   chart      = "logstash"
 
   values = [yamlencode({
-    image    = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}/${local.image_name}"
-    imageTag = local.image_tag
+    image    = var.ecr_image_url
+    imageTag = var.image_tag
     rbac = {
       create = true
       serviceAccountAnnotations = {

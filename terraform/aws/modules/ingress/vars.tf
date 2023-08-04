@@ -32,6 +32,10 @@ variable "aws_account_id" {
   type = string
 }
 
-variable "ecr_repository_name" {
+variable "image_tag" {
+  type = string
+}
+
+variable "ecr_image_url" {
   type = string
 }

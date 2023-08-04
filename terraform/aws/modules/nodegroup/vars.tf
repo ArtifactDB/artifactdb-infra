@@ -62,10 +62,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "ecr_repository_name" {
-  type = string
-}
-
 variable "aws_account_id" {
   type = string
 }

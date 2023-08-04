@@ -35,10 +35,6 @@ variable "aws_profile" {
   type        = string
 }
 
-variable "ecr_repository_name" {
-  type = string
-}
-
 variable "helm_deployment_name" {
   type = string
 }
@@ -57,5 +53,13 @@ variable "environment" {
 }
 
 variable "logstash_output_index_name" {
+  type = string
+}
+
+variable "ecr_image_url" {
+  type = string
+}
+
+variable "image_tag" {
   type = string
 }

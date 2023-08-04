@@ -26,10 +26,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "ecr_repository_name" {
-  type = string
-}
-
 variable "helm_deployment_name" {
   type    = string
   default = "sealed-secrets"
@@ -38,4 +34,12 @@ variable "helm_deployment_name" {
 variable "helm_deployment_namespace" {
   type    = string
   default = "kube-system"
+}
+
+variable "image_tag" {
+  type = string
+}
+
+variable "ecr_image_url" {
+  type = string
 }

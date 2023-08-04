@@ -50,3 +50,11 @@ variable "log_retention_days" {
   type        = string
   default     = 30
 }
+
+variable "image_tag" {
+  type = string
+}
+
+variable "ecr_image_url" {
+  type = string
+}

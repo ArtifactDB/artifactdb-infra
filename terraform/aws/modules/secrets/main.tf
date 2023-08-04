@@ -24,24 +24,7 @@ provider "helm" {
   }
 }
 
-locals {
-  image_name_to_pull = "bitnami/sealed-secrets-controller"
-  image_tag_to_pull  = "v0.17.1"
-  image_name_to_push = "${var.ecr_repository_name}/sealed-secrets-controller"
-  image_tag_to_push  = "v0.17.1"
-}
-module "docker_pull_push_ecr" {
-  source             = "../docker_pull_push_ecr"
-  image_name_to_pull = local.image_name_to_pull
-  image_tag_to_pull  = local.image_tag_to_pull
-  image_name_to_push = local.image_name_to_push
-  image_tag_to_push  = local.image_tag_to_push
-  aws_account_id     = var.aws_account_id
-  aws_region         = var.aws_region
-}
-
 resource "helm_release" "sealed" {
-  depends_on       = [module.docker_pull_push_ecr]
   count            = var.secret_controller == "sealed-secrets" ? 1 : 0
   namespace        = var.helm_deployment_namespace
   create_namespace = false
@@ -54,15 +37,15 @@ resource "helm_release" "sealed" {
   # image has moved so overwrite default helm values
   set {
     name  = "image.registry"
-    value = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+    value = element(split("/", var.ecr_image_url), 0)
   }
   set {
     name  = "image.repository"
-    value = local.image_name_to_push
+    value = join("/", slice(split("/", var.ecr_image_url), 1, length(split("/", var.ecr_image_url))))
   }
   set {
     name  = "image.tag"
-    value = local.image_tag_to_push
+    value = var.image_tag
   }
 }
 

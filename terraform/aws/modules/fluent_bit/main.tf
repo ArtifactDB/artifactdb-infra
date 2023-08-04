@@ -20,7 +20,6 @@ provider "helm" {
   }
 }
 
-
 resource "aws_iam_role" "fluent_bit" {
   name = "fluent-bit-${var.cluster_name}"
   lifecycle { ignore_changes = [permissions_boundary] }
@@ -45,7 +44,6 @@ resource "aws_iam_role" "fluent_bit" {
 }
 EOF
 }
-
 
 resource "aws_iam_policy" "fluent_bit_cloudwatch" {
   name        = "fluent-bit-cloudwatch-${var.cluster_name}"
@@ -80,24 +78,8 @@ resource "kubernetes_namespace" "fluent_bit" {
   }
 }
 
-locals {
-  image_name_to_pull = "public.ecr.aws/aws-observability/aws-for-fluent-bit"
-  image_tag_to_pull  = "2.28.4"
-  image_name_to_push = "gp/${var.environment}/fluent-bit"
-  image_tag_to_push  = "2.28.4"
-}
-module "docker_pull_push_ecr" {
-  source             = "../docker_pull_push_ecr"
-  image_name_to_pull = local.image_name_to_pull
-  image_tag_to_pull  = local.image_tag_to_pull
-  image_name_to_push = local.image_name_to_push
-  image_tag_to_push  = local.image_tag_to_push
-  aws_account_id     = var.aws_account_id
-  aws_region         = var.aws_region
-}
-
 resource "helm_release" "fluent_bit" {
-  depends_on = [kubernetes_namespace.fluent_bit, module.docker_pull_push_ecr]
+  depends_on = [kubernetes_namespace.fluent_bit]
   name       = var.helm_deployment_name
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-for-fluent-bit"
@@ -111,8 +93,8 @@ resource "helm_release" "fluent_bit" {
       log_retention_days       = var.log_retention_days
       region                   = var.aws_region
       service_account_name     = var.helm_deployment_name
-      docker_repo              = module.docker_pull_push_ecr.ecr_image_name
-      image_tag                = local.image_tag_to_push
+      docker_repo              = var.ecr_image_url
+      image_tag                = var.image_tag
       service_account_role_arn = aws_iam_role.fluent_bit.arn
     })
   ]

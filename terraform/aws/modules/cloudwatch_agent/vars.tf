@@ -25,10 +25,6 @@ variable "aws_profile" {
   type        = string
 }
 
-variable "ecr_repository_name" {
-  type = string
-}
-
 variable "helm_deployment_name" {
   type = string
 }

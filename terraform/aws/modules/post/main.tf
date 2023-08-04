@@ -7,12 +7,12 @@ locals {
     gprn = "gprn:${var.environment}:platform:${var.platform_id}"
     outputs = {
       for idx, name in data.aws_ssm_parameters_by_path.parameters.names :
-      element(split("/", name), length(split("/", name)) - 1) => jsondecode(data.aws_ssm_parameters_by_path.parameters.values[idx])
-      if !endswith(element(split("/", name), length(split("/", name)) - 1), "bastion")
+      element(split("/", name), length(split("/", name)) - 1) => can(jsondecode(data.aws_ssm_parameters_by_path.parameters.values[idx])) ? jsondecode(data.aws_ssm_parameters_by_path.parameters.values[idx]) : { "value" = data.aws_ssm_parameters_by_path.parameters.values[idx] }
+      if !endswith(element(split("/", name), length(split("/", name)) - 1), "bastion") &&
+      !endswith(element(split("/", name), length(split("/", name)) - 1), "gitlab")
     }
   })
 }
-
 
 resource "null_resource" "store" {
   triggers = { always = timestamp() }
